@@ -159,3 +159,128 @@ const styles = `
   .book-author { font-size: 11px; color: ${PALETTE.muted}; }
 
   /* PANALES DE RITUALES */
+  .ritual-box { background: ${PALETTE.surface}; padding: 20px; border-radius: 15px; border: 1px solid ${PALETTE.border}; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+  .form-label { font-size: 11px; color: ${PALETTE.muted}; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input {
+    padding: 10px; border-radius: 8px; border: 1px solid ${PALETTE.border};
+    background: #180e29; color: white; font-family: inherit; font-size: 13px; outline: none;
+  }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(5,3,10,0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 15px; }
+  .modal { background: ${PALETTE.surface}; border-radius: 20px; border: 1px solid ${PALETTE.border}; width: 100%; max-width: 420px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+
+  /* ANIMACIONES INTERNAS */
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes flicker { 0% { opacity: 0.5; text-shadow: 0 0 4px ${PALETTE.accent2}; } 100% { opacity: 0.9; text-shadow: 0 0 12px ${PALETTE.gold}; } }
+`;
+
+export default function App() {
+  const [tab, setTab] = useState("dashboard");
+  const [books, setBooks] = useState(() => {
+    const saved = localStorage.getItem("goth_books");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [sessions, setSessions] = useState(() => {
+    const saved = localStorage.getItem("goth_sessions");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterState, setFilterState] = useState("Todos");
+
+  useEffect(() => { localStorage.setItem("goth_books", JSON.stringify(books)); }, [books]);
+  useEffect(() => { localStorage.setItem("goth_sessions", JSON.stringify(sessions)); }, [sessions]);
+
+  // Cálculos de estadísticas existentes
+  const totalPages = sessions.reduce((acc, s) => acc + (Number(s.pages) || 0), 0);
+  const totalMinutes = sessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  const filteredBooks = books.filter(b => {
+    const matchesSearch = b.title?.toLowerCase().includes(search.toLowerCase()) || b.author?.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter = filterState === "Todos" || b.state === filterState;
+    return matchesSearch && matchesFilter;
+  });
+
+  return (
+    <div className="app">
+      <style>{styles}</style>
+      
+      <header className="topbar">
+        <div className="topbar-container">
+          <div className="topbar-logo">
+            Cripta de Lectura
+            <span>Módulo de Monitoreo de Tomos</span>
+          </div>
+          <nav className="nav">
+            <button className={`nav-btn ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>🔮 Cripta</button>
+            <button className={`nav-btn ${tab === "gallery" ? "active" : ""}`} onClick={() => setTab("gallery")}>📚 Tomos</button>
+            <button className={`nav-btn ${tab === "sessions" ? "active" : ""}`} onClick={() => setTab("sessions")}>🕯️ Rituales</button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="main">
+        
+        {/* PESTAÑA 1: DASHBOARD (CRIPTA) */}
+        {tab === "dashboard" && (
+          <div>
+            <div className="section-title">Panel de la Eternidad</div>
+            
+            {/* WIDGET LUNA DE SANGRE ACTUALIZADO */}
+            <div className="luna-widget">
+              <div className="luna-icon">🌕</div>
+              <div>
+                <div style={{ fontWeight: "700", fontSize: "14px", color: "#e6def5", fontFamily: "'Cinzel', serif" }}>Luna de sangre</div>
+                <div style={{ fontSize: "11px", color: PALETTE.accent2, fontWeight: "600" }}>⚡ Poder máximo — noche de luna de sangre</div>
+              </div>
+            </div>
+
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-label">📜 Tomos sellados</div>
+                <div className="stat-value">{books.length}</div>
+                <div className="stat-sub">en la cripta</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">📖 Páginas devoradas</div>
+                <div className="stat-value">{totalPages}</div>
+                <div className="stat-sub">en {sessions.length} rituales</div>
+              </div>
+              <div className="stat-card candles-card">
+                <div className="stat-label">🕯️ Horas en las sombras</div>
+                <div className="stat-value">{hours}h</div>
+                <div className="stat-sub">{minutes} minutos</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">🩸 Calificación media</div>
+                <div className="stat-value">
+                  {books.filter(b => b.rating).length 
+                    ? (books.reduce((acc, b) => acc + Number(b.rating || 0), 0) / books.filter(b => b.rating).length).toFixed(1)
+                    : "—"}
+                </div>
+                <div className="stat-sub">sobre tomos leídos</div>
+              </div>
+            </div>
+
+            <div style={{ background: PALETTE.surface, padding: "15px", borderRadius: "15px", marginBottom: "20px", border: `1px solid ${PALETTE.border}` }}>
+              <div style={{ fontSize: "12px", color: PALETTE.muted, marginBottom: "10px", fontFamily: "Cinzel" }}>🌙 Tomos por mes</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: "40px", padding: "0 10px" }}>
+                {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", flex: 1 }}>
+                    <div style={{ width: "60%", height: "4px", background: PALETTE.accent, borderRadius: "2px" }}></div>
+                    <span style={{ fontSize: "8px", color: PALETTE.muted }}>{m}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="candles-decor">🕯️ 🕯️ 🕯️</div>
+          </div>
+        )}
+
+        {/* PESTAÑA 2:
