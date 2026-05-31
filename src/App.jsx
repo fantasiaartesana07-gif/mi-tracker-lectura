@@ -95,3 +95,67 @@ const styles = `
   .section-title::before { content: '✦'; color: ${PALETTE.accent2}; }
 
   /* ESTADÍSTICAS EN MATRIZ */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+  .stat-card {
+    background: ${PALETTE.surface}; border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.02);
+    padding: 16px; position: relative; overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    border-left: 3px solid ${PALETTE.accent};
+  }
+  .stat-card.candles-card { border-left-color: ${PALETTE.accent2}; }
+  .stat-label { font-size: 11px; color: ${PALETTE.muted}; font-weight: 600; }
+  .stat-value { font-size: 26px; color: white; font-weight: 700; margin: 4px 0; }
+  .stat-sub { font-size: 11px; color: ${PALETTE.muted}; }
+
+  /* WIDGET LUNA DE SANGRE */
+  .luna-widget {
+    background: linear-gradient(135deg, #2b0b14 0%, #11091f 100%);
+    border: 1px solid rgba(169, 29, 34, 0.4); border-radius: 15px;
+    padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(169, 29, 34, 0.15);
+  }
+  .luna-icon { 
+    font-size: 30px; 
+    animation: float 3s ease-in-out infinite;
+    filter: hue-rotate(320deg) saturate(3) drop-shadow(0 0 8px ${PALETTE.accent2});
+  }
+
+  /* VELAS ANIMADAS */
+  .candles-decor { text-align: center; margin: 25px 0; font-size: 22px; letter-spacing: 12px; animation: flicker 1.5s infinite alternate; }
+
+  /* FORMULARIOS Y BOTONES */
+  .add-btn {
+    width: 100%; background: linear-gradient(90deg, ${PALETTE.accent2}, ${PALETTE.accent}); color: white;
+    border: none; cursor: pointer; padding: 12px; border-radius: 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700;
+    margin-bottom: 20px; box-shadow: 0 4px 15px rgba(169,29,34,0.2);
+  }
+  
+  .filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid ${PALETTE.border};
+    background: ${PALETTE.surface}; cursor: pointer; font-size: 12px; color: ${PALETTE.muted}; white-space: nowrap;
+  }
+  .filter-chip.active { background: ${PALETTE.accent}; color: white; border-color: ${PALETTE.accent3}; }
+
+  .search-input {
+    width: 100%; padding: 12px 16px; border-radius: 25px; border: 1px solid ${PALETTE.border};
+    font-size: 13px; background: #0c0717; color: white; outline: none; margin-bottom: 20px;
+  }
+
+  /* LISTADO DE TOMOS */
+  .books-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .book-card {
+    background: ${PALETTE.surface}; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03);
+    overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .book-cover-placeholder {
+    height: 130px; background: linear-gradient(135deg, #1b0f32, #090512);
+    display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative;
+  }
+  .book-info { padding: 12px; }
+  .book-title { font-weight: 700; font-size: 13px; color: white; margin-bottom: 2px; }
+  .book-author { font-size: 11px; color: ${PALETTE.muted}; }
+
+  /* PANALES DE RITUALES */
