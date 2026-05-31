@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
 
 function App() {
-  // --- ESTADOS PRINCIPALES ---
+  // --- ESTADOS DE NAVEGACIÓN Y FILTROS ---
   const [pestanaActiva, setPestanaActiva] = useState('cripta'); // 'cripta', 'tomos', 'rituales'
-  const [filtroTomo, setFiltroTomo] = useState('todos'); // 'todos', 'pendiente', 'lectura', 'terminado', 'abandonado'
+  const [filtroTomo, setFiltroTomo] = useState('todos');
   const [busqueda, setBusqueda] = useState("");
 
-  // Persistencia en LocalStorage para no perder tus datos reales
+  // --- PERSISTENCIA DE DATOS REALES ---
   const [tomos, setTomos] = useState(() => {
     const guardados = localStorage.getItem('neofito_tomos');
     return guardados ? JSON.parse(guardados) : [];
@@ -22,14 +21,8 @@ function App() {
   const [nuevoTitulo, setNuevoTitulo] = useState("");
   const [nuevoAutor, setNuevoAutor] = useState("");
   const [totalPaginas, setTotalPaginas] = useState("");
-  const [formatoTomo, setFormatoTomo] = useState("Físico");
-  const [generoTomo, setGeneroTomo] = useState("Fantasía");
-
-  // Formulario de Rituales
+  
   const [ritualTomoId, setRitualTomoId] = useState("");
-  const [ritualFecha, setRitualFecha] = useState("2026-05-31");
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFin, setHoraFin] = useState("");
   const [pagInicio, setPagInicio] = useState(0);
   const [pagFin, setPagFin] = useState(0);
   const [notaRitual, setNotaRitual] = useState("");
@@ -42,325 +35,509 @@ function App() {
     localStorage.setItem('neofito_rituales', JSON.stringify(rituales));
   }, [rituales]);
 
-  // --- MANEJADORES DE EVENTOS ---
-  const manejarAgregarTomo = (e) => {
+  // --- MANEJADORES DE LOGICA ---
+  const agregarTomo = (e) => {
     e.preventDefault();
     if (!nuevoTitulo || !totalPaginas) return;
 
-    const nuevoTomo = {
+    const nuevo = {
       id: Date.now(),
       titulo: nuevoTitulo,
       autor: nuevoAutor || "Anónimo",
       paginasTotales: parseInt(totalPaginas),
       paginasLeidas: 0,
-      estado: 'pendiente', // 'pendiente', 'lectura', 'terminado', 'abandonado'
-      formato: formatoTomo,
-      genero: generoTomo,
+      estado: 'pendiente',
       calificacion: 0
     };
 
-    setTomos([...tomos, nuevoTomo]);
+    setTomos([...tomos, nuevo]);
     setNuevoTitulo("");
     setNuevoAutor("");
     setTotalPaginas("");
   };
 
-  const manejarAgregarRitual = (e) => {
+  const agregarRitual = (e) => {
     e.preventDefault();
-    if (!ritualTomoId || pagFin < pagInicio) return;
+    if (!ritualTomoId || parseInt(pagFin) < parseInt(pagInicio)) return;
 
     const tomoAsociado = tomos.find(t => t.id === parseInt(ritualTomoId));
     if (!tomoAsociado) return;
 
-    const nuevoRitual = {
+    const nuevo = {
       id: Date.now(),
       tomoId: tomoAsociado.id,
       tomoTitulo: tomoAsociado.titulo,
-      fecha: ritualFecha,
-      horaInicio,
-      horaFin,
+      fecha: new Date().toLocaleDateString('es-AR'),
       pagInicio: parseInt(pagInicio),
       pagFin: parseInt(pagFin),
       nota: notaRitual
     };
 
-    setRituales([...rituales, nuevoRitual]);
+    setRituales([...rituales, nuevo]);
     
-    // Actualizar páginas leídas en el tomo de forma automática
     setTomos(tomos.map(t => {
       if (t.id === tomoAsociado.id) {
-        const nuevasLeidas = Math.max(t.paginasLeidas, parseInt(pagFin));
-        const nuevoEstado = nuevasLeidas >= t.paginasTotales ? 'terminado' : 'lectura';
-        return { ...t, paginasLeidas: nuevasLeidas, estado: nuevoEstado };
+        const avanzadas = Math.max(t.paginasLeidas, parseInt(pagFin));
+        const finalizado = avanzadas >= t.paginasTotales ? 'terminado' : 'lectura';
+        return { ...t, paginasLeidas: avanzadas, estado: finalizado };
       }
       return t;
     }));
 
     setNotaRitual("");
+    setPagInicio(pagFin);
   };
 
-  const actualizarCalificacion = (id, estrellas) => {
-    setTomos(tomos.map(t => t.id === id ? { ...t, calificacion: estrellas } : t));
-  };
-
-  const cambiarEstadoTomo = (id, nuevoEstado) => {
-    setTomos(tomos.map(t => t.id === id ? { ...t, estado: nuevoEstado } : t));
-  };
-
-  // --- ANALÍTICAS Y CONTEOS (PANEL DE LA ETERNIDAD) ---
+  // --- CÁLCULOS DEL PANEL DE LA ETERNIDAD ---
   const tomosSellados = tomos.length;
-  const paginasDevoradas = rituales.reduce((acc, curr) => acc + (curr.pagFin - curr.pagInicio), 0);
+  const paginasDevoradas = rituales.reduce((acc, r) => acc + (r.pagFin - r.pagInicio), 0);
   const tomosTerminados = tomos.filter(t => t.estado === 'terminado').length;
-  
-  const tomosConCalificacion = tomos.filter(t => t.calificacion > 0);
-  const calificacionMedia = tomosConCalificacion.length > 0 
-    ? (tomosConCalificacion.reduce((acc, curr) => acc + curr.calificacion, 0) / tomosConCalificacion.length).toFixed(1)
-    : 0;
+  const calificados = tomos.filter(t => t.calificacion > 0);
+  const mediaCalificacion = calificados.length > 0 
+    ? (calificados.reduce((acc, t) => acc + t.calificacion, 0) / calificados.length).toFixed(1)
+    : "0";
 
-  const librosFiltrados = tomos.filter(t => {
-    const coincideBusqueda = t.titulo.toLowerCase().includes(busqueda.toLowerCase()) || t.autor.toLowerCase().includes(busqueda.toLowerCase());
-    const coincideFiltro = filtroTomo === 'todos' || t.estado === filtroTomo;
-    return coincideBusqueda && coincideFiltro;
+  const tomosFiltrados = tomos.filter(t => {
+    const cumpleFiltro = filtroTomo === 'todos' || t.estado === filtroTomo;
+    const cumpleBusqueda = t.titulo.toLowerCase().includes(busqueda.toLowerCase());
+    return cumpleFiltro && cumpleBusqueda;
   });
 
   return (
-    <div className="app-container">
+    <div style={styles.appContainer}>
       
-      {/* HEADER PRINCIPAL */}
-      <header className="goth-topbar">
-        <div className="goth-logo-box">
-          <span className="goth-crest">☥</span>
-          <div className="topbar-logo">
-            NEÓFITO
-            <span>BIBLIOTECA DE SANGRE</span>
-          </div>
+      {/* INYECTOR DE ESTILOS GLOBALES FORZADO (Evita el fondo blanco por completo) */}
+      <style>{`
+        body { background-color: #07040f !important; margin: 0; color: #cdcbd1; font-family: sans-serif; }
+        input::placeholder { color: #5a4b75; }
+        select { appearance: none; WebkitAppearance: none; }
+      `}</style>
+
+      {/* HEADER DE LA APP */}
+      <header style={styles.header}>
+        <div style={styles.logoBox}>
+          <span style={styles.crest}>☥</span>
+          <h1 style={styles.logoText}>NEÓFITO<span style={styles.subLogo}>BIBLIOTECA DE SANGRE</span></h1>
         </div>
 
-        {/* NAVEGACIÓN MÍSTICA DE PESTAÑAS (IGUAL AL VIDEO) */}
-        <nav className="goth-tabs">
-          <button className={`tab-btn ${pestanaActiva === 'cripta' ? 'active' : ''}`} onClick={() => setPestanaActiva('cripta')}>
-            <span className="tab-icon">🏰</span> Cripta
+        {/* SELECTOR DE PESTAÑAS (Estilo cápsula del video) */}
+        <div style={styles.tabsContainer}>
+          <button style={{...styles.tabBtn, ...(pestanaActiva === 'cripta' ? styles.tabActive : {})}} onClick={() => setPestanaActiva('cripta')}>
+            🏰 Cripta
           </button>
-          <button className={`tab-btn ${pestanaActiva === 'tomos' ? 'active' : ''}`} onClick={() => setPestanaActiva('tomos')}>
-            <span className="tab-icon">🔮</span> Tomos
+          <button style={{...styles.tabBtn, ...(pestanaActiva === 'tomos' ? styles.tabActive : {})}} onClick={() => setPestanaActiva('tomos')}>
+            🔮 Tomos
           </button>
-          <button className={`tab-btn ${pestanaActiva === 'rituales' ? 'active' : ''}`} onClick={() => setPestanaActiva('rituales')}>
-            <span className="tab-icon">🩸</span> Rituales
+          <button style={{...styles.tabBtn, ...(pestanaActiva === 'rituales' ? styles.tabActive : {})}} onClick={() => setPestanaActiva('rituales')}>
+            🩸 Rituales
           </button>
-        </nav>
+        </div>
       </header>
 
-      {/* CONTENIDO DINÁMICO SEGÚN PESTAÑA */}
-      <main className="main-content">
+      {/* CUERPO DINÁMICO */}
+      <main style={styles.main}>
         
-        {/* PESTAÑA 1: CRIPTA (PANEL DE LA ETERNIDAD) */}
+        {/* PESTAÑA: CRIPTA */}
         {pestanaActiva === 'cripta' && (
-          <section className="fade-in">
-            <div className="section-title-box">
-              <h2>✦ Panel de la Eternidad ✦</h2>
-              <div className="luna-status">
-                <span className="moon-icon">🌕</span> <strong>Luna llena</strong> — <em>Poder máximo - noche de luna llena</em>
+          <div>
+            <h2 style={styles.sectionTitle}>✦ Panel de la Eternidad ✦</h2>
+            <div style={styles.lunaStatus}>
+              🌕 <strong>Luna llena</strong> — <em>Poder máximo - noche de luna llena</em>
+            </div>
+
+            {/* Reconstrucción exacta de las 4 tarjetas oscuras del video */}
+            <div style={styles.gridCards}>
+              <div style={styles.card}>
+                <span style={styles.cardIcon}>📚</span>
+                <span style={styles.cardNum}>{tomosTerminados}</span>
+                <span style={styles.cardLabel}>Tomos sellados de {tomosSellados} en la cripta</span>
+              </div>
+              <div style={styles.card}>
+                <span style={styles.cardIcon}>📜</span>
+                <span style={styles.cardNum}>{paginasDevoradas}</span>
+                <span style={styles.cardLabel}>Páginas devoradas en {rituales.length} rituales</span>
+              </div>
+              <div style={styles.card}>
+                <span style={styles.cardIcon}>⏳</span>
+                <span style={styles.cardNum}>{rituales.length * 20}m</span>
+                <span style={styles.cardLabel}>Horas en las sombras</span>
+              </div>
+              <div style={styles.card}>
+                <span style={styles.cardIcon}>🩸</span>
+                <span style={styles.cardNum}>{mediaCalificacion}</span>
+                <span style={styles.cardLabel}>Calificación media sobre {calificados.length} tomos</span>
               </div>
             </div>
 
-            {/* Grid de Analíticas Estilo Tarjetas Cuadradas */}
-            <div className="stats-grid-cards">
-              <div className="stat-card-premium">
-                <span className="card-icon">📚</span>
-                <span className="card-number">{tomosTerminados}</span>
-                <span className="card-label">Tomos sellados de {tomosSellados} en la cripta</span>
-              </div>
-
-              <div className="stat-card-premium">
-                <span className="card-icon">📜</span>
-                <span className="card-number">{paginasDevoradas}</span>
-                <span className="card-label">Páginas devoradas en {rituales.length} rituales</span>
-              </div>
-
-              <div className="stat-card-premium">
-                <span className="card-icon">⏳</span>
-                <span className="card-number">{rituales.length * 30}m</span>
-                <span className="card-label">Horas en las sombras</span>
-              </div>
-
-              <div className="stat-card-premium">
-                <span className="card-icon">🩸</span>
-                <span className="card-number">{calificacionMedia}</span>
-                <span className="card-label">Calificación media sobre {tomosConCalificacion.length} tomos</span>
-              </div>
+            <div style={styles.shadowBox}>
+              <h3 style={{margin: 0, fontSize: '15px', color: '#fff'}}>📊 Distribución de Sombras</h3>
+              <p style={{fontSize: '12px', color: '#7a6a95', margin: '4px 0 12px 0'}}>Formatos y géneros literarios en posesión...</p>
+              <div style={{color: '#7a6a95', fontSize: '13px', fontStyle: 'italic'}}>Las sombras aguardan datos aún...</div>
             </div>
-
-            {/* Gráficos / Listas informativas inferiores */}
-            <div className="shadow-info-box">
-              <h3>📊 Distribución de Sombras</h3>
-              <p className="sub-shadow">Formatos y géneros literarios en posesión...</p>
-              <div className="genres-placeholder">
-                {tomosSellados === 0 ? "Las sombras aguardan datos aún..." : `Gestionando tus formatos activos.`}
-              </div>
-            </div>
-          </section>
+          </div>
         )}
 
-        {/* PESTAÑA 2: TOMOS (BIBLIOTECA ÓSCURA) */}
+        {/* PESTAÑA: TOMOS */}
         {pestanaActiva === 'tomos' && (
-          <section className="fade-in">
-            <div className="section-title-box">
-              <h2>✦ La Biblioteca Oscura ✦</h2>
-            </div>
+          <div>
+            <h2 style={styles.sectionTitle}>✦ La Biblioteca Oscura ✦</h2>
 
-            {/* Formulario Desplegable para añadir libro */}
-            <details className="goth-details-form">
-              <summary className="btn-trigger-form">➕ Añadir tomo oculto</summary>
-              <form onSubmit={manejarAgregarTomo} className="goth-form-box">
-                <input type="text" placeholder="Título del Tomo" value={nuevoTitulo} onChange={(e) => setNuevoTitulo(e.target.value)} required />
-                <input type="text" placeholder="Autor / Entidad" value={nuevoAutor} onChange={(e) => setNuevoAutor(e.target.value)} />
-                <input type="number" placeholder="Páginas Totales" value={totalPaginas} onChange={(e) => setTotalPaginas(e.target.value)} required min="1" />
-                <div className="form-row">
-                  <select value={formatoTomo} onChange={(e) => setFormatoTomo(e.target.value)}>
-                    <option value="Físico">Físico</option>
-                    <option value="Digital">Digital</option>
-                    <option value="Audio">Audiolibro</option>
-                  </select>
-                  <select value={generoTomo} onChange={(e) => setGeneroTomo(e.target.value)}>
-                    <option value="Fantasía">Fantasía</option>
-                    <option value="Gótico">Gótico</option>
-                    <option value="Esoterismo">Esoterismo</option>
-                    <option value="Misterio">Misterio</option>
-                  </select>
-                </div>
-                <button type="submit" className="goth-btn">Sellar Manuscrito</button>
+            {/* Añadir Libro Oculto */}
+            <details style={{marginBottom: '15px'}}>
+              <summary style={styles.summaryBtn}>➕ Añadir tomo oculto</summary>
+              <form onSubmit={agregarTomo} style={styles.formBox}>
+                <input style={styles.input} type="text" placeholder="Título del Tomo" value={nuevoTitulo} onChange={e => setNuevoTitulo(e.target.value)} required />
+                <input style={styles.input} type="text" placeholder="Autor / Entidad" value={nuevoAutor} onChange={e => setNuevoAutor(e.target.value)} />
+                <input style={styles.input} type="number" placeholder="Páginas Totales" value={totalPaginas} onChange={e => setTotalPaginas(e.target.value)} required />
+                <button style={styles.submitBtn} type="submit">Sellar Manuscrito</button>
               </form>
             </details>
 
-            {/* Buscador de la Cripta */}
-            <div className="search-bar-box">
-              <input type="text" placeholder="Buscar en la cripta..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-              <span className="search-eye">👁️</span>
+            {/* Buscador */}
+            <div style={{position: 'relative', marginBottom: '15px'}}>
+              <input style={styles.input} type="text" placeholder="Buscar en la cripta..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+              <span style={{position: 'absolute', right: '12px', top: '10px'}}>👁️</span>
             </div>
 
-            {/* Filtros de Estado Estilo Botones de la Cripta */}
-            <div className="filter-chips">
-              <button className={filtroTomo === 'todos' ? 'active' : ''} onClick={() => setFiltroTomo('todos')}>🌑 Todos</button>
-              <button className={filtroTomo === 'pendiente' ? 'active' : ''} onClick={() => setFiltroTomo('pendiente')}>🌙 Pendiente</button>
-              <button className={filtroTomo === 'lectura' ? 'active' : ''} onClick={() => setFiltroTomo('lectura')}>🩸 En lectura</button>
-              <button className={filtroTomo === 'terminado' ? 'active' : ''} onClick={() => setFiltroTomo('terminado')}>✨ Terminado</button>
-              <button className={filtroTomo === 'abandonado' ? 'active' : ''} onClick={() => setFiltroTomo('abandonado')}>🥀 Abandonado</button>
+            {/* Chips de Filtrado */}
+            <div style={styles.chipsRow}>
+              {['todos', 'pendiente', 'lectura', 'terminado', 'abandonado'].map(f => (
+                <button key={f} style={{...styles.chip, ...(filtroTomo === f ? styles.chipActive : {})}} onClick={() => setFiltroTomo(f)}>
+                  {f === 'todos' && '🌑 Todos'}
+                  {f === 'pendiente' && '🌙 Pendiente'}
+                  {f === 'lectura' && '🩸 En lectura'}
+                  {f === 'terminado' && '✨ Terminado'}
+                  {f === 'abandonado' && '🥀 Abandonado'}
+                </button>
+              ))}
             </div>
 
-            {/* Listado de Libros Reales */}
-            <div className="tomos-list">
-              {librosFiltrados.length > 0 ? (
-                librosFiltrados.map(tomo => {
-                  const pct = Math.round((tomo.paginasLeidas / tomo.paginasTotales) * 100);
-                  return (
-                    <div key={tomo.id} className="tomo-row-card">
-                      <div className="tomo-info">
-                        <h3>{tomo.titulo}</h3>
-                        <p>Por {tomo.autor} — <span>{tomo.genero} ({tomo.formato})</span></p>
-                      </div>
-                      
-                      <div className="tomo-interactive">
-                        <div className="progress-bar-goth"><div style={{ width: `${pct}%` }}></div></div>
-                        <span className="pct-text">{tomo.paginasLeidas}/{tomo.paginasTotales} px ({pct}%)</span>
-                        
-                        <div className="tomo-actions">
-                          <select value={tomo.estado} onChange={(e) => cambiarEstadoTomo(tomo.id, e.target.value)}>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="lectura">En Lectura</option>
-                            <option value="terminado">Terminado</option>
-                            <option value="abandonado">Abandonado</option>
-                          </select>
-                          
-                          <div className="stars-rating">
-                            {[1,2,3,4,5].map(s => (
-                              <span key={s} className={tomo.calificacion >= s ? 'star full' : 'star'} onClick={() => actualizarCalificacion(tomo.id, s)}>★</span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+            {/* Render de Tomos */}
+            <div>
+              {tomosFiltrados.length > 0 ? (
+                tomosFiltrados.map(t => (
+                  <div key={t.id} style={styles.tomoCard}>
+                    <div>
+                      <h4 style={{margin: '0 0 4px 0', color: '#fff'}}>{t.titulo}</h4>
+                      <p style={{margin: 0, fontSize: '12px', color: '#7a6a95'}}>Por {t.autor}</p>
                     </div>
-                  );
-                })
+                    <div style={{display: 'flex', flexDirection: 'column', alignTemplate: 'end', gap: '5px'}}>
+                      <span style={{fontSize: '11px', color: '#ff4d54'}}>{t.paginasLeidas}/{t.paginasTotales} pág</span>
+                      <select style={styles.miniSelect} value={t.estado} onChange={e => setTomos(tomos.map(item => item.id === t.id ? {...item, estado: e.target.value} : item))}>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="lectura">Lectura</option>
+                        <option value="terminado">Terminado</option>
+                        <option value="abandonado">Abandonado</option>
+                      </select>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="empty-state">
-                  <div className="withered-rose">🥀</div>
-                  <p>La cripta está vacía... Añade tu primer tomo oscuro.</p>
+                <div style={{textAlign: 'center', color: '#7a6a95', padding: '30px 0'}}>
+                  <span style={{fontSize: '24px'}}>🥀</span>
+                  <p style={{fontSize: '13px', marginTop: '5px'}}>La cripta está vacía... Añade tu primer tomo oscuro.</p>
                 </div>
               )}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* PESTAÑA 3: RITUALES (LOS GRANDES RITUALES) */}
+        {/* PESTAÑA: RITUALES */}
         {pestanaActiva === 'rituales' && (
-          <section className="fade-in">
-            <div className="section-title-box">
-              <h2>✦ Los Grandes Rituales ✦</h2>
-            </div>
-
-            {/* Formulario de Registro de Lectura Diaria */}
-            <form onSubmit={manejarAgregarRitual} className="goth-form-box ritual-form">
-              <h3>🩸 Registrar Nuevo Ritual</h3>
+          <div>
+            <h2 style={styles.sectionTitle}>✦ Los Grandes Rituales ✦</h2>
+            
+            <form onSubmit={agregarRitual} style={styles.formBox}>
+              <h3 style={{margin: '0 0 5px 0', fontSize: '15px', color: '#fff'}}>🩸 Registrar Nuevo Ritual</h3>
               
-              <label>Tomo a invocar:</label>
-              <select value={ritualTomoId} onChange={(e) => setRitualTomoId(e.target.value)} required>
+              <label style={styles.label}>Tomo a invocar:</label>
+              <select style={styles.select} value={ritualTomoId} onChange={e => setRitualTomoId(e.target.value)} required>
                 <option value="">— Seleccionar Manuscrito Activo —</option>
                 {tomos.filter(t => t.estado !== 'terminado').map(t => (
                   <option key={t.id} value={t.id}>{t.titulo} (Vas por la pág. {t.paginasLeidas})</option>
                 ))}
               </select>
 
-              <div className="form-row">
-                <div>
-                  <label>Fecha:</label>
-                  <input type="date" value={ritualFecha} onChange={(e) => setRitualFecha(e.target.value)} />
+              <div style={{display: 'flex', gap: '10px'}}>
+                <div style={{flex: 1}}>
+                  <label style={styles.label}>Pág. Inicio:</label>
+                  <input style={styles.input} type="number" value={pagInicio} onChange={e => setPagInicio(e.target.value)} />
                 </div>
-                <div>
-                  <label>Pág. Inicio:</label>
-                  <input type="number" value={pagInicio} onChange={(e) => setPagInicio(e.target.value)} min="0" />
-                </div>
-                <div>
-                  <label>Pág. Fin:</label>
-                  <input type="number" value={pagFin} onChange={(e) => setPagFin(e.target.value)} min="0" />
+                <div style={{flex: 1}}>
+                  <label style={styles.label}>Pág. Fin:</label>
+                  <input style={styles.input} type="number" value={pagFin} onChange={e => setPagFin(e.target.value)} />
                 </div>
               </div>
 
-              <input type="text" placeholder="Notas del ritual (Comentario opcional)..." value={notaRitual} onChange={(e) => setNotaRitual(e.target.value)} />
-              
-              <button type="submit" className="goth-btn btn-blood">Sellar ritual 🔥</button>
+              <input style={styles.input} type="text" placeholder="Notas del ritual (Comentario opcional)..." value={notaRitual} onChange={e => setNotaRitual(e.target.value)} />
+              <button style={{...styles.submitBtn, backgroundColor: '#800e13'}} type="submit">Sellar ritual 🔥</button>
             </form>
 
-            {/* Historial de Rituales */}
-            <div className="rituales-history">
-              <h3>📜 Pergaminos de Rituales</h3>
+            <div style={{marginTop: '25px'}}>
+              <h3 style={{fontSize: '15px', color: '#fff', borderBottom: '1px solid #1f163a', paddingBottom: '8px'}}>📜 Pergaminos de Rituales</h3>
               {rituales.length > 0 ? (
-                rituales.slice().reverse().map(rit => (
-                  <div key={rit.id} className="ritual-scroll-card">
-                    <div className="scroll-header">
-                      <h4>{rit.tomoTitulo}</h4>
-                      <span className="scroll-date">📅 {rit.fecha}</span>
+                rituales.slice().reverse().map(r => (
+                  <div key={r.id} style={styles.ritualCard}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
+                      <strong style={{color: '#fff', fontSize: '13px'}}>{r.tomoTitulo}</strong>
+                      <span style={{fontSize: '11px', color: '#7a6a95'}}>{r.fecha}</span>
                     </div>
-                    <p>Leídas <strong>{rit.pagFin - rit.pagInicio} páginas</strong> (Desde la pág. {rit.pagInicio} hasta la {rit.pagFin}).</p>
-                    {rit.nota && <p className="scroll-note"><em>"{rit.nota}"</em></p>}
+                    <p style={{margin: 0, fontSize: '12px', color: '#cdcbd1'}}>Devoradas páginas {r.pagInicio} a {r.pagFin}.</p>
+                    {r.nota && <p style={{margin: '4px 0 0 0', fontSize: '11px', color: '#7a6a95', fontStyle: 'italic'}}>"{r.nota}"</p>}
                   </div>
                 ))
               ) : (
-                <div className="empty-state">
-                  <p>Sin rituales registrados en los anales...</p>
-                </div>
+                <div style={{color: '#7a6a95', fontSize: '13px', padding: '15px 0'}}>Sin rituales registrados en los anales...</div>
               )}
             </div>
-          </section>
+          </div>
         )}
 
       </main>
 
-      <footer className="goth-footer">
-        <p>© 2026 Neófito App — Hecho en las Sombras</p>
+      <footer style={styles.footer}>
+        © 2026 Neófito App — Hecho en las Sombras
       </footer>
-
     </div>
   );
 }
+
+// --- OBJETO DE ESTILOS INTEGRADOS (Gótico Inmersivo Forzado) ---
+const styles = {
+  appContainer: {
+    backgroundColor: '#07040f',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '16px',
+    boxSizing: 'border-box',
+  },
+  header: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    paddingBottom: '12px',
+    borderBottom: '1px solid #1f163a',
+    marginBottom: '16px',
+  },
+  logoBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  crest: {
+    color: '#ff4d54',
+    fontSize: '22px',
+  },
+  logoText: {
+    margin: 0,
+    fontSize: '18px',
+    letterSpacing: '1.5px',
+    color: '#ffffff',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  subLogo: {
+    fontSize: '8px',
+    color: '#7a6a95',
+    letterSpacing: '2px',
+    marginTop: '2px',
+  },
+  tabsContainer: {
+    display: 'flex',
+    backgroundColor: '#110b24',
+    padding: '4px',
+    borderRadius: '25px',
+    gap: '4px',
+  },
+  tabBtn: {
+    flex: 1,
+    background: 'transparent',
+    border: 'none',
+    color: '#7a6a95',
+    padding: '8px 4px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  tabActive: {
+    backgroundColor: '#1c123a',
+    color: '#ffffff',
+    boxShadow: '0 0 10px rgba(255, 77, 84, 0.15)',
+  },
+  main: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: '19px',
+    color: '#ffffff',
+    margin: '0 0 8px 0',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  lunaStatus: {
+    backgroundColor: '#110b24',
+    border: '1px dashed #2d2050',
+    borderRadius: '8px',
+    padding: '10px',
+    fontSize: '12px',
+    textAlign: 'center',
+    marginBottom: '16px',
+    color: '#cdcbd1',
+  },
+  gridCards: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+    marginBottom: '20px',
+  },
+  card: {
+    backgroundColor: '#110b24',
+    border: '1px solid #1f163a',
+    borderRadius: '12px',
+    padding: '14px',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100px',
+  },
+  cardIcon: {
+    fontSize: '18px',
+    marginBottom: '6px',
+  },
+  cardNum: {
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#ffffff',
+    lineHeight: '1',
+    marginBottom: '6px',
+  },
+  cardLabel: {
+    fontSize: '10px',
+    color: '#5a4b75',
+    lineHeight: '1.3',
+  },
+  shadowBox: {
+    backgroundColor: '#110b24',
+    border: '1px solid #1f163a',
+    borderRadius: '10px',
+    padding: '14px',
+  },
+  summaryBtn: {
+    backgroundColor: '#110b24',
+    border: '1px solid #1f163a',
+    padding: '10px',
+    borderRadius: '6px',
+    color: '#fff',
+    fontSize: '13px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    listStyle: 'none',
+  },
+  formBox: {
+    backgroundColor: '#110b24',
+    border: '1px solid #1f163a',
+    padding: '14px',
+    borderRadius: '8px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginTop: '8px',
+  },
+  input: {
+    backgroundColor: '#07040f',
+    border: '1px solid #1f163a',
+    color: '#fff',
+    padding: '10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  select: {
+    backgroundColor: '#07040f',
+    border: '1px solid #1f163a',
+    color: '#fff',
+    padding: '10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    outline: 'none',
+    width: '100%',
+  },
+  submitBtn: {
+    backgroundColor: '#2d1b4e',
+    color: '#fff',
+    border: 'none',
+    padding: '10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+  },
+  chipsRow: {
+    display: 'flex',
+    gap: '6px',
+    overflowX: 'auto',
+    paddingBottom: '8px',
+    marginBottom: '15px',
+  },
+  chip: {
+    background: '#110b24',
+    border: '1px solid #1f163a',
+    color: '#cdcbd1',
+    padding: '6px 12px',
+    borderRadius: '16px',
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+  },
+  chipActive: {
+    background: '#800e13',
+    borderColor: '#ff4d54',
+    color: '#fff',
+  },
+  tomoCard: {
+    backgroundColor: '#110b24',
+    borderLeft: '3px solid #ff4d54',
+    borderTop: '1px solid #1f163a',
+    borderRight: '1px solid #1f163a',
+    borderBottom: '1px solid #1f163a',
+    padding: '12px',
+    borderRadius: '6px',
+    marginBottom: '10px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  miniSelect: {
+    backgroundColor: '#07040f',
+    border: '1px solid #1f163a',
+    color: '#ff4d54',
+    fontSize: '11px',
+    padding: '3px',
+    borderRadius: '4px',
+  },
+  label: {
+    fontSize: '11px',
+    color: '#7a6a95',
+    marginBottom: '2px',
+    display: 'block',
+  },
+  ritualCard: {
+    backgroundColor: '#110b24',
+    border: '1px solid #1f163a',
+    padding: '10px',
+    borderRadius: '6px',
+    marginBottom: '8px',
+  },
+  footer: {
+    textAlign: 'center',
+    fontSize: '11px',
+    color: '#5a4b75',
+    paddingTop: '20px',
+    marginTop: 'auto',
+  }
+};
 
 export default App;
