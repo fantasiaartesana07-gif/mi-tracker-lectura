@@ -22,6 +22,11 @@ function App() {
   const [nuevoAutor, setNuevoAutor] = useState("");
   const [totalPaginas, setTotalPaginas] = useState("");
   
+  // Nuevos campos
+  const [nuevoGenero, setNuevoGenero] = useState("");
+  const [nuevaPortada, setNuevaPortada] = useState("");
+  const [nuevaSinopsis, setNuevaSinopsis] = useState("");
+  
   const [ritualTomoId, setRitualTomoId] = useState("");
   const [pagInicio, setPagInicio] = useState(0);
   const [pagFin, setPagFin] = useState(0);
@@ -44,16 +49,22 @@ function App() {
       id: Date.now(),
       titulo: nuevoTitulo,
       autor: nuevoAutor || "Anónimo",
+      genero: nuevoGenero || "Desconocido",
+      portada: nuevaPortada || "",
+      sinopsis: nuevaSinopsis || "",
       paginasTotales: parseInt(totalPaginas),
       paginasLeidas: 0,
       estado: 'pendiente',
-      calificacion: 0
+      calificacion: 0 // Se califica con cráneos más adelante
     };
 
     setTomos([...tomos, nuevo]);
     setNuevoTitulo("");
     setNuevoAutor("");
     setTotalPaginas("");
+    setNuevoGenero("");
+    setNuevaPortada("");
+    setNuevaSinopsis("");
   };
 
   const agregarRitual = (e) => {
@@ -88,6 +99,11 @@ function App() {
     setPagInicio(pagFin);
   };
 
+  // Función para calificar con cráneos
+  const calificarTomo = (id, nota) => {
+    setTomos(tomos.map(t => t.id === id ? { ...t, calificacion: nota } : t));
+  };
+
   // --- CÁLCULOS DEL PANEL DE LA ETERNIDAD ---
   const tomosSellados = tomos.length;
   const paginasDevoradas = rituales.reduce((acc, r) => acc + (r.pagFin - r.pagInicio), 0);
@@ -106,10 +122,10 @@ function App() {
   return (
     <div style={styles.appContainer}>
       
-      {/* INYECTOR DE ESTILOS GLOBALES FORZADO (Evita el fondo blanco por completo) */}
+      {/* INYECTOR DE ESTILOS GLOBALES FORZADO */}
       <style>{`
         body { background-color: #07040f !important; margin: 0; color: #cdcbd1; font-family: sans-serif; }
-        input::placeholder { color: #5a4b75; }
+        input::placeholder, textarea::placeholder { color: #5a4b75; }
         select { appearance: none; WebkitAppearance: none; }
       `}</style>
 
@@ -120,7 +136,7 @@ function App() {
           <h1 style={styles.logoText}>NEÓFITO<span style={styles.subLogo}>BIBLIOTECA DE SANGRE</span></h1>
         </div>
 
-        {/* SELECTOR DE PESTAÑAS (Estilo cápsula del video) */}
+        {/* SELECTOR DE PESTAÑAS */}
         <div style={styles.tabsContainer}>
           <button style={{...styles.tabBtn, ...(pestanaActiva === 'cripta' ? styles.tabActive : {})}} onClick={() => setPestanaActiva('cripta')}>
             🏰 Cripta
@@ -145,7 +161,6 @@ function App() {
               🌕 <strong>Luna llena</strong> — <em>Poder máximo - noche de luna llena</em>
             </div>
 
-            {/* Reconstrucción exacta de las 4 tarjetas oscuras del video */}
             <div style={styles.gridCards}>
               <div style={styles.card}>
                 <span style={styles.cardIcon}>📚</span>
@@ -163,7 +178,7 @@ function App() {
                 <span style={styles.cardLabel}>Horas en las sombras</span>
               </div>
               <div style={styles.card}>
-                <span style={styles.cardIcon}>🩸</span>
+                <span style={styles.cardIcon}>💀</span>
                 <span style={styles.cardNum}>{mediaCalificacion}</span>
                 <span style={styles.cardLabel}>Calificación media sobre {calificados.length} tomos</span>
               </div>
@@ -182,13 +197,28 @@ function App() {
           <div>
             <h2 style={styles.sectionTitle}>✦ La Biblioteca Oscura ✦</h2>
 
-            {/* Añadir Libro Oculto */}
+            {/* Añadir Libro Oculto Expandido */}
             <details style={{marginBottom: '15px'}}>
               <summary style={styles.summaryBtn}>➕ Añadir tomo oculto</summary>
               <form onSubmit={agregarTomo} style={styles.formBox}>
-                <input style={styles.input} type="text" placeholder="Título del Tomo" value={nuevoTitulo} onChange={e => setNuevoTitulo(e.target.value)} required />
+                <input style={styles.input} type="text" placeholder="Título del Tomo *" value={nuevoTitulo} onChange={e => setNuevoTitulo(e.target.value)} required />
                 <input style={styles.input} type="text" placeholder="Autor / Entidad" value={nuevoAutor} onChange={e => setNuevoAutor(e.target.value)} />
-                <input style={styles.input} type="number" placeholder="Páginas Totales" value={totalPaginas} onChange={e => setTotalPaginas(e.target.value)} required />
+                
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <select style={{...styles.select, flex: 1}} value={nuevoGenero} onChange={e => setNuevoGenero(e.target.value)}>
+                    <option value="">Género Oscuro...</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Ocultismo">Ocultismo</option>
+                    <option value="Fantasía Oscura">Fantasía Oscura</option>
+                    <option value="Misterio">Misterio</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                  <input style={{...styles.input, flex: 1}} type="number" placeholder="Páginas *" value={totalPaginas} onChange={e => setTotalPaginas(e.target.value)} required />
+                </div>
+                
+                <input style={styles.input} type="url" placeholder="URL de la Portada (Opcional)" value={nuevaPortada} onChange={e => setNuevaPortada(e.target.value)} />
+                <textarea style={styles.textarea} placeholder="Sinopsis maldita..." value={nuevaSinopsis} onChange={e => setNuevaSinopsis(e.target.value)} />
+                
                 <button style={styles.submitBtn} type="submit">Sellar Manuscrito</button>
               </form>
             </details>
@@ -212,23 +242,65 @@ function App() {
               ))}
             </div>
 
-            {/* Render de Tomos */}
+            {/* Render de Tomos Expandido */}
             <div>
               {tomosFiltrados.length > 0 ? (
                 tomosFiltrados.map(t => (
                   <div key={t.id} style={styles.tomoCard}>
-                    <div>
-                      <h4 style={{margin: '0 0 4px 0', color: '#fff'}}>{t.titulo}</h4>
-                      <p style={{margin: 0, fontSize: '12px', color: '#7a6a95'}}>Por {t.autor}</p>
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'column', alignTemplate: 'end', gap: '5px'}}>
-                      <span style={{fontSize: '11px', color: '#ff4d54'}}>{t.paginasLeidas}/{t.paginasTotales} pág</span>
-                      <select style={styles.miniSelect} value={t.estado} onChange={e => setTomos(tomos.map(item => item.id === t.id ? {...item, estado: e.target.value} : item))}>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="lectura">Lectura</option>
-                        <option value="terminado">Terminado</option>
-                        <option value="abandonado">Abandonado</option>
-                      </select>
+                    {/* Contenedor Flex para Portada + Info */}
+                    <div style={{display: 'flex', gap: '12px', width: '100%'}}>
+                      
+                      {/* Portada */}
+                      <div style={styles.portadaContainer}>
+                        {t.portada ? (
+                          <img src={t.portada} alt={t.titulo} style={styles.portadaImg} />
+                        ) : (
+                          <div style={styles.portadaPlaceholder}>🌑</div>
+                        )}
+                      </div>
+
+                      {/* Información Central */}
+                      <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+                        <h4 style={{margin: '0 0 2px 0', color: '#fff'}}>{t.titulo}</h4>
+                        <p style={{margin: '0 0 6px 0', fontSize: '12px', color: '#7a6a95'}}>Por {t.autor}</p>
+                        
+                        <div style={{display: 'flex', gap: '6px', marginBottom: '6px', flexWrap: 'wrap'}}>
+                          <span style={styles.miniTag}>{t.genero}</span>
+                          <span style={{...styles.miniTag, color: '#ff4d54', borderColor: '#ff4d54'}}>
+                            {t.paginasLeidas}/{t.paginasTotales} pág
+                          </span>
+                        </div>
+
+                        {t.sinopsis && (
+                          <p style={styles.sinopsisText}>{t.sinopsis}</p>
+                        )}
+
+                        {/* Selector de Cráneos & Estado */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '8px'}}>
+                          <div style={styles.craneosBox}>
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <span 
+                                key={num} 
+                                onClick={() => calificarTomo(t.id, num)}
+                                style={{
+                                  ...styles.craneo,
+                                  opacity: t.calificacion >= num ? 1 : 0.2
+                                }}
+                              >
+                                💀
+                              </span>
+                            ))}
+                          </div>
+
+                          <select style={styles.miniSelect} value={t.estado} onChange={e => setTomos(tomos.map(item => item.id === t.id ? {...item, estado: e.target.value} : item))}>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="lectura">Lectura</option>
+                            <option value="terminado">Terminado</option>
+                            <option value="abandonado">Abandonado</option>
+                          </select>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
                 ))
@@ -455,6 +527,20 @@ const styles = {
     boxSizing: 'border-box',
     width: '100%',
   },
+  textarea: {
+    backgroundColor: '#07040f',
+    border: '1px solid #1f163a',
+    color: '#fff',
+    padding: '10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    width: '100%',
+    minHeight: '70px',
+    resize: 'vertical',
+    fontFamily: 'inherit'
+  },
   select: {
     backgroundColor: '#07040f',
     border: '1px solid #1f163a',
@@ -507,15 +593,63 @@ const styles = {
     borderRadius: '6px',
     marginBottom: '10px',
     display: 'flex',
-    justifyContent: 'space-between',
+  },
+  portadaContainer: {
+    width: '70px',
+    flexShrink: 0,
+  },
+  portadaImg: {
+    width: '100%',
+    height: '100px',
+    objectFit: 'cover',
+    borderRadius: '4px',
+    border: '1px solid #1f163a',
+  },
+  portadaPlaceholder: {
+    width: '100%',
+    height: '100px',
+    backgroundColor: '#07040f',
+    borderRadius: '4px',
+    border: '1px solid #1f163a',
+    display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+  },
+  miniTag: {
+    fontSize: '10px',
+    padding: '2px 6px',
+    borderRadius: '10px',
+    backgroundColor: '#07040f',
+    border: '1px solid #2d2050',
+    color: '#cdcbd1'
+  },
+  sinopsisText: {
+    margin: '0 0 10px 0',
+    fontSize: '11px',
+    color: '#5a4b75',
+    fontStyle: 'italic',
+    lineHeight: '1.4',
+    display: '-webkit-box',
+    WebkitLineClamp: '3',
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden'
+  },
+  craneosBox: {
+    display: 'flex',
+    gap: '2px',
+  },
+  craneo: {
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'opacity 0.2s',
   },
   miniSelect: {
     backgroundColor: '#07040f',
     border: '1px solid #1f163a',
     color: '#ff4d54',
     fontSize: '11px',
-    padding: '3px',
+    padding: '4px',
     borderRadius: '4px',
   },
   label: {
@@ -541,4 +675,3 @@ const styles = {
 };
 
 export default App;
-                             
