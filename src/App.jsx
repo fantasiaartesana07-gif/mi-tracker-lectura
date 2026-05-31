@@ -9,8 +9,8 @@ const RATINGS = [1, 2, 3, 4, 5];
 
 const FRASE_VAMPIRICA = "«La inmortalidad no se mide en años, sino en los mundos que devoramos antes del amanecer».";
 
-// Pista gótica/vampírica instrumental y libre de copyright para ambiente profundo
-const AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"; 
+// Nueva pista: Órgano gótico y violín sombrío profundo
+const AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"; 
 
 const STATE_COLORS = {
   "Pendiente": "#9d4edf",
@@ -68,7 +68,6 @@ const styles = `
     display: flex; width: 100%; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto;
   }
 
-  /* NUEVO LOGO EMBLEMÁTICO GÓTICO */
   .goth-logo-box {
     display: flex; align-items: center; gap: 8px;
   }
@@ -100,10 +99,9 @@ const styles = `
   }
   .nav-btn.active { background: ${PALETTE.accent2}; color: white; box-shadow: 0 0 12px ${PALETTE.accent2}; }
 
-  /* REPRODUCTOR FLOTANTE DE AMBIENTE VAMPÍRICO */
   .audio-controller {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(22, 12, 40, 0.85); border: 1px solid rgba(157, 78, 223, 0.3);
+    background: rgba(22, 12, 40, 0.85); border: 1px solid rgba(169, 29, 34, 0.4);
     padding: 6px 12px; border-radius: 20px;
     font-size: 10px; font-weight: 700; color: #ffffff;
     cursor: pointer; transition: all 0.3s ease;
@@ -111,7 +109,7 @@ const styles = `
   }
   .audio-controller.playing {
     border-color: ${PALETTE.accent2};
-    box-shadow: 0 0 10px rgba(169, 29, 34, 0.4);
+    box-shadow: 0 0 10px rgba(169, 29, 34, 0.6);
   }
   .audio-wave {
     display: flex; gap: 2px; align-items: flex-end; height: 10px;
@@ -137,17 +135,34 @@ const styles = `
   }
   .section-title::before { content: '✦'; color: ${PALETTE.accent2}; font-size: 14px; }
 
+  /* LUNA GENERADA POR CSS — INFALIBLE Y ULTRA REALISTA */
   .luna-widget {
     background: linear-gradient(135deg, #1f080f 0%, #11061c 100%);
     border: 1px solid rgba(169, 29, 34, 0.45); border-radius: 16px;
     padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 25px;
     box-shadow: 0 6px 25px rgba(169, 29, 34, 0.2), inset 0 0 15px rgba(169,29,34,0.15);
   }
-  .luna-real-img {
+  .luna-css-render {
     width: 44px; height: 44px; border-radius: 50%;
-    filter: hue-rotate(335deg) saturate(3.5) brightness(0.9) drop-shadow(0 0 10px #a91d22);
+    background: radial-gradient(circle at 30% 30%, #ff4d4d 0%, #a91d22 50%, #4a0004 100%);
+    box-shadow: 
+      inset -6px -6px 12px rgba(0, 0, 0, 0.8), 
+      inset 6px 6px 8px rgba(255, 255, 255, 0.2),
+      0 0 15px rgba(169, 29, 34, 0.8);
+    position: relative;
+    overflow: hidden;
     animation: float 4s ease-in-out infinite;
-    object-fit: cover;
+    flex-shrink: 0;
+  }
+  /* Simulador de cráteres lunares oscuros */
+  .luna-css-render::before {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    background-image: 
+      radial-gradient(circle at 60% 70%, rgba(0,0,0,0.25) 12%, transparent 13%),
+      radial-gradient(circle at 25% 55%, rgba(0,0,0,0.2) 8%, transparent 9%),
+      radial-gradient(circle at 45% 30%, rgba(0,0,0,0.2) 10%, transparent 11%),
+      radial-gradient(circle at 75% 40%, rgba(0,0,0,0.15) 6%, transparent 7%);
+    opacity: 0.8;
   }
 
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
@@ -240,7 +255,6 @@ export default function App() {
   const [books, setBooks] = useState(() => JSON.parse(localStorage.getItem("goth_books") || "[]"));
   const [sessions, setSessions] = useState(() => JSON.parse(localStorage.getItem("goth_sessions") || "[]"));
   
-  // Estado para controlar el audio ambiental
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
@@ -286,13 +300,11 @@ export default function App() {
     <div className="app">
       <style>{styles}</style>
       
-      {/* Elemento de Audio Oculto */}
       <audio ref={audioRef} src={AUDIO_URL} loop />
 
       <header className="topbar">
         <div className="topbar-container">
           
-          {/* IDENTIDAD REDISEÑADA: LOGO GÓTICO HERÁLDICO */}
           <div className="goth-logo-box">
             <span className="goth-crest">☥</span>
             <div className="topbar-logo">
@@ -311,13 +323,11 @@ export default function App() {
 
       <main className="main">
         
-        {/* PESTAÑA 1: DASHBOARD (CRIPTA) */}
         {tab === "dashboard" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <div className="section-title" style={{ margin: 0 }}>Panel de la Eternidad</div>
               
-              {/* BOTÓN REPRODUCTOR ATMOSFÉRICO */}
               <button className={`audio-controller ${isPlaying ? "playing" : ""}`} onClick={toggleAudio}>
                 <div className="audio-wave">
                   <div className="audio-bar"></div>
@@ -328,12 +338,9 @@ export default function App() {
               </button>
             </div>
             
+            {/* COMPONENTE DE LUNA CSS SANADO Y RESPLANDECIENTE */}
             <div className="luna-widget">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/1/10/Supermoon_Nov-14-2016-Cropped.jpg" 
-                alt="Luna de Sangre"
-                className="luna-real-img"
-              />
+              <div className="luna-css-render"></div>
               <div>
                 <div style={{ fontWeight: "700", fontSize: "14px", color: "#ffffff", fontFamily: "'Cinzel', serif", letterSpacing: "0.5px" }}>LUNA DE SANGRE</div>
                 <div style={{ fontSize: "11px", color: PALETTE.accent2, fontWeight: "600", marginTop: "2px" }}>⚡ Poder máximo — noche de luna de sangre</div>
@@ -503,7 +510,7 @@ export default function App() {
                 sessions.map(s => {
                   const b = books.find(bk => String(bk.id) === String(s.bookId));
                   return (
-                    <div key={s.id} style={{ background: PALETTE.surface, padding: "14px", borderRadius: "12px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifycontent: "space-between", alignItems: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
+                    <div key={s.id} style={{ background: PALETTE.surface, padding: "14px", borderRadius: "12px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
                       <div>
                         <div style={{ fontSize: "12px", fontWeight: "700", color: "#ffffff" }}>{b ? b.title : "Tomo Desconocido"}</div>
                         <div style={{ fontSize: "10px", color: PALETTE.muted, marginTop: "2px" }}>{s.date} • {s.duration} mins en silencio</div>
