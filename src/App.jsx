@@ -7,6 +7,7 @@ export default function App() {
   const [lang, setLang] = useState("Español");
 
   const addTomo = () => {
+    if (!title.trim()) return;
     setBooks([...books, { id: Date.now(), title, lang }]);
     setTitle("");
   };
@@ -16,10 +17,14 @@ export default function App() {
       <h1>🏰 Neófito: Biblioteca de Sangre</h1>
       
       <div className="card">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título..." />
-        <select onChange={(e) => setLang(e.target.value)}>
-          <option>Español</option>
-          <option>Francés</option>
+        <input 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          placeholder="Título del manuscrito..." 
+        />
+        <select value={lang} onChange={(e) => setLang(e.target.value)}>
+          <option value="Español">Español</option>
+          <option value="Francés">Francés</option>
         </select>
         <button onClick={addTomo}>Consagrar</button>
       </div>
@@ -30,7 +35,7 @@ export default function App() {
             <h4 className={b.lang === "Francés" ? "french-title" : ""}>
               {b.title}
             </h4>
-            <small>{b.lang}</small>
+            <small style={{ color: "#7a6a95" }}>Idioma: {b.lang}</small>
           </div>
         ))}
       </div>
