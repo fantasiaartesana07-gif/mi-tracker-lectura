@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 
-// Fuentes místicas y estilos góticos embebidos idénticos al video
+// Fuentes místicas y estilos góticos avanzados
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');`;
 
 const GENRES = ["Fantasía", "Romance", "Thriller", "Ciencia Ficción", "Drama", "BL/GL", "Filosófica", "Aventura", "Histórica", "Terror"];
 const STATES = ["Pendiente", "En lectura", "Terminado", "Abandonado"];
 const RATINGS = [1, 2, 3, 4, 5];
+
+// Citas místicas para rellenar la base del Grimorio con atmósfera
+const FRASES_GRIMORIO = [
+  "«Los libros son espejos: solo ves en ellos lo que ya tienes dentro».",
+  "«La lectura es un pacto de silencio entre dos almas eternas».",
+  "«Quien devora tomos en la penumbra, jamás teme a la soledad de la noche».",
+  "«Cada página pasada es un segundo robado al olvido del tiempo».",
+  "«En el eco de las palabras escritas se esconden los secretos del cosmos»."
+];
 
 const STATE_COLORS = {
   "Pendiente": "#9d4edf",
@@ -24,187 +33,227 @@ const STATE_ICONS = {
 const PALETTE = {
   bg: "#07040f",
   surface: "#11091f",
-  card: "#170d2a",
+  card: "#160c28",
   accent: "#6320a0",
   accent2: "#a91d22",
   accent3: "#9d4edf",
   text: "#e6def5",
-  muted: "#867a99",
-  border: "rgba(99, 32, 160, 0.25)",
+  muted: "#7e7099",
+  border: "rgba(169, 29, 34, 0.2)",
   gold: "#f59e0b",
 };
 
 const styles = `
   ${FONTS}
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
   body { 
     font-family: 'Plus Jakarta Sans', sans-serif; 
     background: ${PALETTE.bg}; 
     color: ${PALETTE.text};
-    background-image: linear-gradient(180deg, rgba(99, 32, 160, 0.12) 0%, rgba(0,0,0,0) 100%);
+    /* Niebla mística de fondo: degradado superior e inferior profundo */
+    background-image: 
+      linear-gradient(180deg, rgba(99, 32, 160, 0.15) 0%, rgba(7, 4, 15, 0) 40%, rgba(169, 29, 34, 0.08) 85%, #000000 100%);
     background-attachment: fixed;
+    min-height: 100vh;
   }
 
-  .app { min-height: 100vh; padding-bottom: 60px; }
+  .app { min-height: 100vh; padding-bottom: 80px; position: relative; }
 
-  /* TOP BAR IDENTICA AL VIDEO */
+  /* TOP BAR CORREGIDA */
   .topbar {
-    background: rgba(17, 9, 31, 0.9);
-    border-bottom: 1px solid ${PALETTE.border};
-    backdrop-filter: blur(12px);
+    background: rgba(11, 5, 20, 0.93);
+    border-bottom: 1px solid rgba(99, 32, 160, 0.3);
+    backdrop-filter: blur(15px);
     padding: 15px 20px;
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
     position: sticky; top: 0; z-index: 100;
-  }
-  @media(min-width: 480px) {
-    .topbar { flex-direction: row; justify-content: space-between; }
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
   }
   
   .topbar-container {
-    display: flex; width: 100%; justify-content: space-between; align-items: center; max-width: 500px;
+    display: flex; width: 100%; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto;
   }
 
   .topbar-logo {
     font-family: 'Cinzel', serif;
-    font-size: 16px; font-weight: 700;
-    color: ${PALETTE.text}; letter-spacing: 1px;
-    text-shadow: 0 0 10px ${PALETTE.accent};
-    display: flex; flex-direction: column; line-height: 1.2;
+    font-size: 15px; font-weight: 700;
+    color: #ffffff; letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(157, 78, 223, 0.6);
+    line-height: 1.2;
   }
-  .topbar-logo span { font-size: 11px; color: ${PALETTE.muted}; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .topbar-logo span { font-size: 10px; color: ${PALETTE.muted}; font-family: 'Plus Jakarta Sans', sans-serif; display: block; font-weight: 400; }
   
-  .nav { display: flex; background: #07040f; padding: 4px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.03); }
+  .nav { display: flex; background: #05030a; padding: 4px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04); }
   .nav-btn {
     background: none; border: none; cursor: pointer;
-    padding: 6px 12px; border-radius: 15px;
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600;
-    color: ${PALETTE.muted}; transition: all 0.3s;
+    padding: 7px 14px; border-radius: 16px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+    color: ${PALETTE.muted}; transition: all 0.3s ease;
   }
-  .nav-btn.active { background: ${PALETTE.accent}; color: white; box-shadow: 0 0 10px ${PALETTE.accent}; }
+  .nav-btn.active { background: ${PALETTE.accent}; color: white; box-shadow: 0 0 12px ${PALETTE.accent3}; }
 
-  /* MAIN CONTENEDOR MÓVIL */
+  /* MAIN CONTENEDOR */
   .main { padding: 20px; max-width: 500px; margin: 0 auto; }
 
-  /* TITULOS CON LA ROSA EN SANGRE */
+  /* TITULOS DE SECCIÓN */
   .section-title {
     font-family: 'Cinzel', serif;
-    font-size: 14px; font-weight: 700;
-    color: ${PALETTE.accent3}; margin: 15px 0 20px 0;
-    letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700;
+    color: ${PALETTE.text}; margin: 10px 0 20px 0;
+    letter-spacing: 2px; display: flex; align-items: center; gap: 8px;
+    text-shadow: 0 0 5px rgba(230, 222, 245, 0.3);
   }
-  .section-title::before { content: '✦'; color: ${PALETTE.accent2}; }
+  .section-title::before { content: '✦'; color: ${PALETTE.accent2}; font-size: 14px; }
 
-  /* ESTADÍSTICAS EN MATRIZ */
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+  /* LUNA DE SANGRE MEJORADA */
+  .luna-widget {
+    background: linear-gradient(135deg, #1f080f 0%, #11061c 100%);
+    border: 1px solid rgba(169, 29, 34, 0.45); border-radius: 16px;
+    padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 25px;
+    box-shadow: 0 6px 25px rgba(169, 29, 34, 0.15), inset 0 0 15px rgba(169,29,34,0.1);
+  }
+  .luna-img-wrapper {
+    font-size: 32px; filter: drop-shadow(0 0 8px #a91d22);
+    animation: float 4s ease-in-out infinite;
+  }
+
+  /* MATRIZ DE ESTADÍSTICAS REFORZADA */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
   .stat-card {
-    background: ${PALETTE.surface}; border-radius: 15px;
-    border: 1px solid rgba(255,255,255,0.02);
+    background: linear-gradient(145deg, ${PALETTE.card} 0%, ${PALETTE.surface} 100%); 
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.03);
     padding: 16px; position: relative; overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     border-left: 3px solid ${PALETTE.accent};
   }
   .stat-card.candles-card { border-left-color: ${PALETTE.accent2}; }
-  .stat-label { font-size: 11px; color: ${PALETTE.muted}; font-weight: 600; }
-  .stat-value { font-size: 26px; color: white; font-weight: 700; margin: 4px 0; }
+  .stat-label { font-size: 11px; color: ${PALETTE.muted}; font-weight: 600; letter-spacing: 0.3px; }
+  .stat-value { font-size: 28px; color: #ffffff; font-weight: 700; margin: 4px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
   .stat-sub { font-size: 11px; color: ${PALETTE.muted}; }
 
-  /* WIDGET LUNA DE SANGRE */
-  .luna-widget {
-    background: linear-gradient(135deg, #2b0b14 0%, #11091f 100%);
-    border: 1px solid rgba(169, 29, 34, 0.4); border-radius: 15px;
-    padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px;
-    box-shadow: 0 4px 20px rgba(169, 29, 34, 0.15);
+  /* CONTENEDOR GRÁFICO MEJORADO */
+  .chart-box {
+    background: #11091f; padding: 18px; border-radius: 16px; margin-bottom: 25px;
+    border: 1px solid rgba(99, 32, 160, 0.15); box-shadow: 0 6px 20px rgba(0,0,0,0.3);
   }
-  .luna-icon { 
-    font-size: 30px; 
-    animation: float 3s ease-in-out infinite;
-    filter: hue-rotate(320deg) saturate(3) drop-shadow(0 0 8px ${PALETTE.accent2});
+  .chart-bar-container { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end; }
+  .chart-bar-fill { 
+    width: 8px; background: linear-gradient(180deg, ${PALETTE.accent2} 0%, ${PALETTE.accent} 100%); 
+    border-radius: 4px; box-shadow: 0 0 8px ${PALETTE.accent2};
+    transition: height 0.5s ease;
   }
 
-  /* VELAS ANIMADAS */
-  .candles-decor { text-align: center; margin: 25px 0; font-size: 22px; letter-spacing: 12px; animation: flicker 1.5s infinite alternate; }
+  /* SECCIÓN INFERIOR: PERGAMINO DE CITAS (RELLENA EL VACÍO) */
+  .grimorio-quote-box {
+    background: linear-gradient(180deg, rgba(23, 13, 42, 0.6) 0%, rgba(11, 5, 20, 0.9) 100%);
+    border: 1px dashed rgba(157, 78, 223, 0.3);
+    border-radius: 14px; padding: 20px; text-align: center; margin-top: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+    position: relative;
+  }
+  .grimorio-quote-box::before, .grimorio-quote-box::after {
+    content: '✵'; color: ${PALETTE.accent3}; position: absolute; top: 8px; font-size: 10px; opacity: 0.5;
+  }
+  .grimorio-quote-box::before { left: 12px; }
+  .grimorio-quote-box::after { right: 12px; }
 
-  /* FORMULARIOS Y BOTONES */
+  /* COMPONENTES DE INTERFAZ */
   .add-btn {
     width: 100%; background: linear-gradient(90deg, ${PALETTE.accent2}, ${PALETTE.accent}); color: white;
-    border: none; cursor: pointer; padding: 12px; border-radius: 12px;
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700;
-    margin-bottom: 20px; box-shadow: 0 4px 15px rgba(169,29,34,0.2);
+    border: none; cursor: pointer; padding: 14px; border-radius: 14px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
+    margin-bottom: 20px; box-shadow: 0 4px 15px rgba(169,29,34,0.3); letter-spacing: 0.5px;
   }
   
-  .filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
-  .filter-chip {
-    padding: 6px 14px; border-radius: 20px; border: 1px solid ${PALETTE.border};
-    background: ${PALETTE.surface}; cursor: pointer; font-size: 12px; color: ${PALETTE.muted}; white-space: nowrap;
-  }
-  .filter-chip.active { background: ${PALETTE.accent}; color: white; border-color: ${PALETTE.accent3}; }
-
   .search-input {
-    width: 100%; padding: 12px 16px; border-radius: 25px; border: 1px solid ${PALETTE.border};
-    font-size: 13px; background: #0c0717; color: white; outline: none; margin-bottom: 20px;
+    width: 100%; padding: 12px 18px; border-radius: 25px; border: 1px solid rgba(157, 78, 223, 0.2);
+    font-size: 12px; background: #0b0614; color: white; outline: none; margin-bottom: 20px;
+    transition: all 0.3s;
+  }
+  .search-input:focus { border-color: ${PALETTE.accent3}; box-shadow: 0 0 8px rgba(157,78,223,0.2); }
+
+  .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+  .filter-chip {
+    padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04);
+    background: ${PALETTE.surface}; cursor: pointer; font-size: 11px; color: ${PALETTE.muted}; white-space: nowrap; font-weight: 600;
+  }
+  .filter-chip.active { background: ${PALETTE.accent}; color: white; border-color: ${PALETTE.accent3}; box-shadow: 0 0 8px ${PALETTE.accent}; }
+
+  /* TARJETAS VACÍAS ESTILIZADAS */
+  .empty-state-box {
+    background: linear-gradient(180deg, #130a24 0%, #0c0617 100%);
+    padding: 45px 20px; border-radius: 16px; textAlign: center;
+    border: 1px dashed rgba(169, 29, 34, 0.3);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
   }
 
-  /* LISTADO DE TOMOS */
-  .books-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .books-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .book-card {
-    background: ${PALETTE.surface}; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03);
-    overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    background: ${PALETTE.surface}; border-radius: 14px; border: 1px solid rgba(255,255,255,0.02);
+    overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.4);
   }
-  .book-cover-placeholder {
-    height: 130px; background: linear-gradient(135deg, #1b0f32, #090512);
-    display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative;
+  
+  .ritual-box { 
+    background: linear-gradient(145deg, ${PALETTE.card} 0%, ${PALETTE.surface} 100%); 
+    padding: 22px; border-radius: 16px; border: 1px solid ${PALETTE.border};
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
   }
-  .book-info { padding: 12px; }
-  .book-title { font-weight: 700; font-size: 13px; color: white; margin-bottom: 2px; }
-  .book-author { font-size: 11px; color: ${PALETTE.muted}; }
-
-  /* PANALES DE RITUALES */
-  .ritual-box { background: ${PALETTE.surface}; padding: 20px; border-radius: 15px; border: 1px solid ${PALETTE.border}; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
-  .form-label { font-size: 11px; color: ${PALETTE.muted}; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .form-label { font-size: 10px; color: ${PALETTE.muted}; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
   .form-input {
-    padding: 10px; border-radius: 8px; border: 1px solid ${PALETTE.border};
-    background: #180e29; color: white; font-family: inherit; font-size: 13px; outline: none;
+    padding: 11px; border-radius: 10px; border: 1px solid rgba(157, 78, 223, 0.15);
+    background: #090512; color: white; font-family: inherit; font-size: 12px; outline: none;
   }
 
-  /* MODAL */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(5,3,10,0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 15px; }
-  .modal { background: ${PALETTE.surface}; border-radius: 20px; border: 1px solid ${PALETTE.border}; width: 100%; max-width: 420px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(3,2,7,0.9); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 15px; }
+  .modal { background: ${PALETTE.surface}; border-radius: 20px; border: 1px solid rgba(157,78,223,0.3); width: 100%; max-width: 400px; padding: 25px; }
 
-  /* ANIMACIONES INTERNAS */
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-  @keyframes flicker { 0% { opacity: 0.5; text-shadow: 0 0 4px ${PALETTE.accent2}; } 100% { opacity: 0.9; text-shadow: 0 0 12px ${PALETTE.gold}; } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 `;
 
 export default function App() {
   const [tab, setTab] = useState("dashboard");
-  const [books, setBooks] = useState(() => {
-    const saved = localStorage.getItem("goth_books");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem("goth_sessions");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [books, setBooks] = useState(() => JSON.parse(localStorage.getItem("goth_books") || "[]"));
+  const [sessions, setSessions] = useState(() => JSON.parse(localStorage.getItem("goth_sessions") || "[]"));
+  const [quote, setQuote] = useState("");
 
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
   const [filterState, setFilterState] = useState("Todos");
 
+  // Al iniciar, selecciona una cita mística aleatoria del Grimorio para rellenar la base
+  useEffect(() => {
+    const randomQuote = FRASES_GRIMORIO[Math.floor(Math.random() * FRASES_GRIMORIO.length)];
+    setQuote(randomQuote);
+  }, [tab]);
+
   useEffect(() => { localStorage.setItem("goth_books", JSON.stringify(books)); }, [books]);
   useEffect(() => { localStorage.setItem("goth_sessions", JSON.stringify(sessions)); }, [sessions]);
 
-  // Cálculos de estadísticas existentes
   const totalPages = sessions.reduce((acc, s) => acc + (Number(s.pages) || 0), 0);
   const totalMinutes = sessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
+  // Filtrado de tomos de la biblioteca
   const filteredBooks = books.filter(b => {
     const matchesSearch = b.title?.toLowerCase().includes(search.toLowerCase()) || b.author?.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterState === "Todos" || b.state === filterState;
     return matchesSearch && matchesFilter;
   });
+
+  // Agrupar lecturas por mes de manera real para alimentar el gráfico
+  const getMonthHeight = (monthIndex) => {
+    if (books.length === 0 && sessions.length === 0) return "6px"; // Altura mínima mística
+    const count = sessions.filter(s => {
+      if (!s.date) return false;
+      const parts = s.date.split("/");
+      return parts[1] ? parseInt(parts[1], 10) === monthIndex + 1 : false;
+    }).length;
+    return count > 0 ? `${Math.min(count * 12 + 6, 35)}px` : "6px";
+  };
 
   return (
     <div className="app">
@@ -231,12 +280,11 @@ export default function App() {
           <div>
             <div className="section-title">Panel de la Eternidad</div>
             
-            {/* WIDGET LUNA DE SANGRE ACTUALIZADO */}
             <div className="luna-widget">
-              <div className="luna-icon">🌕</div>
+              <div className="luna-img-wrapper">🔴</div>
               <div>
-                <div style={{ fontWeight: "700", fontSize: "14px", color: "#e6def5", fontFamily: "'Cinzel', serif" }}>Luna de sangre</div>
-                <div style={{ fontSize: "11px", color: PALETTE.accent2, fontWeight: "600" }}>⚡ Poder máximo — noche de luna de sangre</div>
+                <div style={{ fontWeight: "700", fontSize: "14px", color: "#ffffff", fontFamily: "'Cinzel', serif", letterSpacing: "0.5px" }}>LUNA DE SANGRE</div>
+                <div style={{ fontSize: "11px", color: PALETTE.accent2, fontWeight: "600", marginTop: "2px" }}>⚡ Poder máximo — noche de luna de sangre</div>
               </div>
             </div>
 
@@ -244,7 +292,7 @@ export default function App() {
               <div className="stat-card">
                 <div className="stat-label">📜 Tomos sellados</div>
                 <div className="stat-value">{books.length}</div>
-                <div className="stat-sub">en la cripta</div>
+                <div className="stat-sub">en la biblioteca</div>
               </div>
               <div className="stat-card">
                 <div className="stat-label">📖 Páginas devoradas</div>
@@ -263,23 +311,30 @@ export default function App() {
                     ? (books.reduce((acc, b) => acc + Number(b.rating || 0), 0) / books.filter(b => b.rating).length).toFixed(1)
                     : "—"}
                 </div>
-                <div className="stat-sub">sobre tomos leídos</div>
+                <div className="stat-sub">sobre grimorios leídos</div>
               </div>
-            </div>
+             </div>
 
-            <div style={{ background: PALETTE.surface, padding: "15px", borderRadius: "15px", marginBottom: "20px", border: `1px solid ${PALETTE.border}` }}>
-              <div style={{ fontSize: "12px", color: PALETTE.muted, marginBottom: "10px", fontFamily: "Cinzel" }}>🌙 Tomos por mes</div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: "40px", padding: "0 10px" }}>
+            {/* GRÁFICO DE BARRAS REDISEÑADO CON NEÓN */}
+            <div className="chart-box">
+              <div style={{ fontSize: "11px", color: PALETTE.muted, marginBottom: "15px", fontFamily: "'Cinzel', serif", letterSpacing: "1px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span>🌙</span> Tomos por mes
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: "45px", padding: "0 5px" }}>
                 {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", flex: 1 }}>
-                    <div style={{ width: "60%", height: "4px", background: PALETTE.accent, borderRadius: "2px" }}></div>
-                    <span style={{ fontSize: "8px", color: PALETTE.muted }}>{m}</span>
+                  <div key={i} className="chart-bar-container">
+                    <div className="chart-bar-fill" style={{ height: getMonthHeight(i) }}></div>
+                    <span style={{ fontSize: "8px", color: PALETTE.muted, fontWeight: "600" }}>{m}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="candles-decor">🕯️ 🕯️ 🕯️</div>
+            {/* RELLENO DEL FONDO: CONTENEDOR DE CITAS GÓTICAS */}
+            <div className="grimorio-quote-box">
+              <div style={{ fontfamily: "'Cinzel', serif", fontSize: "9px", color: PALETTE.accent3, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>Inscripción del Grimorio</div>
+              <p style={{ fontSize: "11px", color: "#c3b9d9", fontStyle: "italic", lineHeight: "1.5" }}>{quote}</p>
+            </div>
           </div>
         )}
 
@@ -311,30 +366,35 @@ export default function App() {
             </div>
 
             {filteredBooks.length === 0 ? (
-              <div style={{ background: PALETTE.surface, padding: "40px 20px", borderRadius: "15px", textAlign: "center", border: `1px dashed ${PALETTE.accent}` }}>
-                <div style={{ fontSize: "35px", marginBottom: "10px" }}>🌹</div>
-                <p style={{ fontSize: "13px", color: PALETTE.muted }}>La cripta está vacía...</p>
-                <p style={{ fontSize: "11px", color: PALETTE.accent3, marginTop: "4px" }}>Las sombras aguardan nuevos tomos</p>
+              <div className="empty-state-box">
+                <div style={{ fontSize: "32px", filter: "drop-shadow(0 0 5px #a91d22)" }}>🌹</div>
+                <p style={{ fontSize: "13px", color: "#e6def5", fontWeight: "600", fontFamily: "Cinzel" }}>La cripta está vacía</p>
+                <p style={{ fontSize: "11px", color: PALETTE.muted, textAlign: "center" }}>Las sombras aguardan pacientemente la invocación de nuevos tomos oscuros.</p>
               </div>
             ) : (
               <div className="books-grid">
                 {filteredBooks.map(b => (
                   <div key={b.id} className="book-card">
-                    <div className="book-cover-placeholder">
-                      📖
-                      <span style={{ position: "absolute", top: "6px", right: "6px", background: STATE_COLORS[b.state], fontSize: "9px", padding: "2px 6px", borderRadius: "6px", color: "white" }}>
-                        {b.state}
+                    <div style={{ height: "120px", background: "linear-gradient(135deg, #180d2b, #07040f)", display: "flex", alignItems: "center", justifycontent: "center", fontSize: "32px", position: "relative", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
+                      📚
+                      <span style={{ position: "absolute", bottom: "8px", left: "8px", background: STATE_COLORS[b.state], fontSize: "8px", padding: "3px 8px", borderRadius: "10px", color: "white", fontWeight: "700" }}>
+                        {b.state.toUpperCase()}
                       </span>
                     </div>
-                    <div className="book-info">
-                      <div className="book-title">{b.title}</div>
-                      <div className="book-author">{b.author}</div>
-                      <div style={{ fontSize: "10px", color: PALETTE.gold, marginTop: "4px" }}>{"★".repeat(b.rating || 0)}</div>
+                    <div style={{ padding: "12px" }}>
+                      <div style={{ fontWeight: "700", fontSize: "13px", color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.title}</div>
+                      <div style={{ fontSize: "11px", color: PALETTE.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: "2px" }}>{b.author}</div>
+                      <div style={{ fontSize: "9px", color: PALETTE.gold, marginTop: "6px" }}>{"★".repeat(b.rating || 0)}</div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* SECCIÓN INFERIOR: RELLENO EN BIBLIOTECA */}
+            <div className="grimorio-quote-box" style={{ marginTop: "25px" }}>
+              <p style={{ fontSize: "10px", color: PALETTE.muted }}>Sección protegida bajo el sello de la Luna de Sangre</p>
+            </div>
           </div>
         )}
 
@@ -344,8 +404,8 @@ export default function App() {
             <div className="section-title">Los Grandes Rituales</div>
             
             <div className="ritual-box">
-              <div style={{ fontSize: "13px", fontWeight: "700", marginBottom: "15px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "Cinzel" }}>
-                <span style={{ color: PALETTE.accent2 }}>🩸</span> Nuevo Ritual de Lectura
+              <div style={{ fontSize: "12px", fontWeight: "700", marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "Cinzel", letterSpacing: "0.5px" }}>
+                <span style={{ color: PALETTE.accent2 }}>🩸</span> Registrar Sesión de Penumbra
               </div>
               
               <form onSubmit={(e) => {
@@ -365,43 +425,45 @@ export default function App() {
               }}>
                 <div className="form-group">
                   <label className="form-label">Seleccionar Tomo Sello</label>
-                  <select name="bookId" className="form-input" style={{ background: "#180e29" }}>
+                  <select name="bookId" className="form-input" style={{ background: "#090512" }}>
                     {books.length === 0 && <option value="">— Sin tomos disponibles —</option>}
                     {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                   </select>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div className="form-group">
                     <label className="form-label">Páginas devoradas</label>
                     <input type="number" name="pages" className="form-input" placeholder="Ej. 34" required />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Minutos en penumbra</label>
+                    <label className="form-label">Minutos transcurridos</label>
                     <input type="number" name="duration" className="form-input" placeholder="Ej. 45" required />
                   </div>
                 </div>
 
-                <button type="submit" className="add-btn" style={{ marginTop: "10px", background: PALETTE.accent }}>
-                  Sellar ritual 🩸
+                <button type="submit" className="add-btn" style={{ marginTop: "8px", background: PALETTE.accent, boxShadow: `0 4px 12px ${PALETTE.accent}` }}>
+                  Sellar ritual de lectura 🩸
                 </button>
               </form>
             </div>
 
             <div style={{ marginTop: "25px" }}>
-              <div style={{ fontSize: "12px", fontFamily: "Cinzel", color: PALETTE.muted, marginBottom: "10px" }}>Pergaminos de rituales</div>
+              <div style={{ fontSize: "11px", fontFamily: "Cinzel", color: PALETTE.muted, letterSpacing: "1px", marginBottom: "12px" }}>Pergaminos de rituales antiguos</div>
               {sessions.length === 0 ? (
-                <div style={{ color: PALETTE.muted, fontSize: "12px", textAlign: "center", padding: "20px" }}>Sin rituales registrados...</div>
+                <div className="empty-state-box" style={{ padding: "30px 20px" }}>
+                  <p style={{ fontSize: "11px", color: PALETTE.muted }}>Ningún ritual ha sido consumado en este ciclo lunar.</p>
+                </div>
               ) : (
                 sessions.map(s => {
                   const b = books.find(bk => String(bk.id) === String(s.bookId));
                   return (
-                    <div key={s.id} style={{ background: PALETTE.surface, padding: "12px", borderRadius: "10px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={s.id} style={{ background: PALETTE.surface, padding: "14px", borderRadius: "12px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
                       <div>
-                        <div style={{ fontSize: "12px", fontWeight: "700" }}>{b ? b.title : "Tomo Desconocido"}</div>
-                        <div style={{ fontSize: "10px", color: PALETTE.muted }}>{s.date} • {s.duration} mins</div>
+                        <div style={{ fontSize: "12px", fontWeight: "700", color: "#ffffff" }}>{b ? b.title : "Tomo Desconocido"}</div>
+                        <div style={{ fontSize: "10px", color: PALETTE.muted, marginTop: "2px" }}>{s.date} • {s.duration} mins en silencio</div>
                       </div>
-                      <div style={{ fontSize: "12px", color: PALETTE.accent3, fontWeight: "700" }}>+{s.pages} pág.</div>
+                      <div style={{ fontSize: "12px", color: PALETTE.accent3, fontWeight: "700", background: "rgba(157, 78, 223, 0.1)", padding: "4px 8px", borderRadius: "6px" }}>+{s.pages} pág.</div>
                     </div>
                   );
                 })
@@ -416,7 +478,7 @@ export default function App() {
       {showAdd && (
         <div className="modal-overlay">
           <div className="modal">
-            <div style={{ fontFamily: "Cinzel", fontSize: "16px", marginBottom: "15px", color: "white" }}>Invocación de Nuevo Tomo</div>
+            <div style={{ fontFamily: "Cinzel", fontSize: "15px", marginBottom: "18px", color: "white", letterSpacing: "0.5px" }}>Invocación de Nuevo Tomo</div>
             <form onSubmit={(e) => {
               e.preventDefault();
               const fd = new FormData(e.target);
@@ -442,7 +504,7 @@ export default function App() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Estado de posesión</label>
+                  <label className="form-label">Estado actual</label>
                   <select name="state" className="form-input">
                     {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -456,9 +518,9 @@ export default function App() {
                 </select>
               </div>
 
-              <div style={{ display: "flex", gap: "10px", marginTop: "20px", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", gap: "10px", marginTop: "22px", justifyContent: "flex-end" }}>
                 <button type="button" className="filter-chip" onClick={() => setShowAdd(false)}>Cerrar</button>
-                <button type="submit" className="add-btn" style={{ width: "auto", padding: "8px 20px", marginBottom: 0 }}>Sellar</button>
+                <button type="submit" className="add-btn" style={{ width: "auto", padding: "8px 22px", marginBottom: 0 }}>Sellar</button>
               </div>
             </form>
           </div>
@@ -466,4 +528,4 @@ export default function App() {
       )}
     </div>
   );
-                    }
+}
