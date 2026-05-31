@@ -1,0 +1,25 @@
+/* Goth.css */
+body {
+  background-color: #07040f;
+  background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px), 
+                    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px);
+  background-size: 550px 550px, 350px 350px;
+  color: white;
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+}
+
+.book-item {
+  background: #171032;
+  border: 1px solid rgba(122, 106, 149, 0.25);
+  border-left: none; /* Sin borde blanco */
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.french-title {
+  font-style: italic;
+  color: #ff4d54; /* Un toque carmesí para diferenciar */
+}
+
