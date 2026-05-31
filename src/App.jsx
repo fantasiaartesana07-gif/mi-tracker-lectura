@@ -33,77 +33,6 @@ const PALETTE = {
   border: "rgba(122, 106, 149, 0.25)",
 };
 
-// --- REPRODUCTOR DE MÚSICA GÓTICA ---
-// Usamos enlaces limpios de streaming de audio ambiental gótico libre de regalías
-const AUDIO_TRACKS = [
-  { id: "dark-ambient", label: "🦇 Cripta Ambiental", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // Música instrumental profunda
-  { id: "goth-choir", label: "🎼 Coro de Sangre", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },  // Tonos de órgano y coros
-  { id: "vampire-waltz", label: "🎻 Vals Nocturno", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" } // Cuerdas trágicas góticas
-];
-
-function GothMusicPlayer() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(AUDIO_TRACKS[0]);
-  const [audioElement, setAudioElement] = useState(null);
-
-  useEffect(() => {
-    const audio = new Audio(currentTrack.url);
-    audio.loop = true;
-    setAudioElement(audio);
-
-    return () => {
-      audio.pause();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (audioElement) {
-      audioElement.pause();
-      const newAudio = new Audio(currentTrack.url);
-      newAudio.loop = true;
-      setAudioElement(newAudio);
-      if (isPlaying) {
-        newAudio.play().catch(e => console.log("Interacción requerida para audio"));
-      }
-    }
-  }, [currentTrack]);
-
-  const togglePlay = () => {
-    if (!audioElement) return;
-    if (isPlaying) {
-      audioElement.pause();
-    } else {
-      audioElement.play().catch(e => console.log("Error de reproducción"));
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  return (
-    <div className="music-player-box">
-      <div className="music-controls">
-        <button onClick={togglePlay} className="play-btn">
-          {isPlaying ? "⏸️ Pausar Ritual" : "▶️ Invocar Melodía"}
-        </button>
-        <select 
-          className="track-select"
-          value={currentTrack.id} 
-          onChange={(e) => {
-            const track = AUDIO_TRACKS.find(t => t.id === e.target.value);
-            if (track) setCurrentTrack(track);
-          }}
-        >
-          {AUDIO_TRACKS.map(t => (
-            <option key={t.id} value={t.id}>{t.label}</option>
-          ))}
-        </select>
-      </div>
-      <span className="playing-status">
-        {isPlaying ? `✨ Sonando: ${currentTrack.label}` : "🌑 El silencio domina la cripta"}
-      </span>
-    </div>
-  );
-}
-
 export default App;
 
 function App() {
@@ -182,9 +111,6 @@ function App() {
             NEÓFITO <span>BIBLIOTECA DE SANGRE</span>
           </div>
           
-          {/* MÚSICA GÓTICA INTEGRADA */}
-          <GothMusicPlayer />
-
           <nav className="nav">
             {TABS.map(t => (
               <button key={t.id} className={`nav-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
@@ -233,7 +159,7 @@ function App() {
   );
 }
 
-// --- COMPONENTES SECUNDARIOS ADAPTADOS A LA OSCURIDAD ---
+// --- COMPONENTES SECUNDARIOS ---
 
 function Dashboard({ books, sessions }) {
   const finished = books.filter(b => b.status === "Terminado").length;
@@ -407,7 +333,7 @@ function BookForm({ onSave, onClose }) {
   );
 }
 
-// --- VARIABLE DE ESTILOS CSS SÚPER INTEGRADOS (FONDO NEGRO ABSOLUTO) ---
+// --- VARIABLE DE ESTILOS CSS ---
 const styles = `
   .app {
     background-color: ${PALETTE.bg};
@@ -438,13 +364,6 @@ const styles = `
   }
   .crest-icon { color: ${PALETTE.accent2}; font-size: 24px; text-shadow: 0 0 8px ${PALETTE.accent2}; }
   .topbar-logo span { font-size: 10px; color: ${PALETTE.muted}; letter-spacing: 2px; font-family: 'Lato', sans-serif; display: block; margin-top: 2px; }
-  
-  /* REPRODUCTOR ESTILO GÓTICO */
-  .music-player-box { background: ${PALETTE.surface}; border: 1px dashed ${PALETTE.accent3}; padding: 8px 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
-  .music-controls { display: flex; gap: 10px; align-items: center; }
-  .play-btn { background: ${PALETTE.accent}; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
-  .track-select { background: ${PALETTE.bg}; color: #fff; border: 1px solid ${PALETTE.accent3}; padding: 4px; border-radius: 4px; font-size: 11px; }
-  .playing-status { font-size: 10px; color: ${PALETTE.muted}; font-style: italic; }
 
   .nav { display: flex; background: ${PALETTE.surface}; padding: 4px; border-radius: 25px; gap: 4px; }
   .nav-btn { flex: 1; background: transparent; border: none; color: ${PALETTE.muted}; padding: 10px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; }
