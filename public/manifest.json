@@ -1,18 +1,20 @@
 {
-  "name": "Mi Tracker de Lectura",
-  "short_name": "Tracker",
-  "description": "Tu tracker personal de lectura",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#eef7f7",
-  "theme_color": "#3a9ead",
-  "orientation": "portrait",
+  "short_name": "Baptisma",
+  "name": "Baptisma: Biblioteca de Sangre",
   "icons": [
     {
-      "src": "https://api.dicebear.com/7.x/icons/svg?seed=book&backgroundColor=3a9ead",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
     }
-  ]
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#07040f",
+  "background_color": "#07040f"
 }
