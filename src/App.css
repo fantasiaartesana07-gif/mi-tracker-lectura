@@ -1,254 +1,90 @@
-/* --- Variables de Paleta Gótica --- */
-:root {
-  --bg-dark-absolute: #050309;
-  --bg-dark-card: #0c0817;
-  --goth-crimson: #a91d22;
-  --goth-crimson-bright: #ff4d54;
-  --silver-text: #e6def5;
-  --muted-purple: #7e7099;
-  --border-metal: #3d354e;
-}
-
-/* --- Reseteo y Base --- */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Cinzel', 'Georgia', serif; /* Una tipografía con serif le da el toque antiguo */
-}
-
-body {
-  background-color: var(--bg-dark-absolute);
-  color: var(--silver-text);
-  overflow-x: hidden;
-}
-
-.app-container {
+/* --- Navegación de Pestañas Superiores (Header) --- */
+.goth-tabs {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  gap: 10px;
 }
 
-/* --- Barra Superior (Topbar) --- */
-.goth-topbar {
+.tab-btn {
+  background: rgba(12, 8, 23, 0.6);
+  border: 1px solid var(--border-metal);
+  color: var(--muted-purple);
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
   background-color: var(--bg-dark-card);
-  border-bottom: 2px solid var(--goth-crimson);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.goth-logo-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.goth-crest {
-  font-size: 28px;
-  color: var(--goth-crimson-bright);
-  text-shadow: 0 0 8px var(--goth-crimson);
-}
-
-.topbar-logo {
-  font-size: 22px;
-  font-weight: bold;
-  letter-spacing: 3px;
+  border-color: var(--goth-crimson-bright);
   color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 77, 84, 0.2);
+}
+
+/* --- Premium Square Cards Grid --- */
+.stats-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.stat-card-premium {
+  background: linear-gradient(145deg, #100b21, #07040f);
+  border: 1px solid rgba(61, 53, 78, 0.5);
+  border-radius: 12px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-premium .card-icon {
+  font-size: 20px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.stat-card-premium .card-number {
+  font-size: 32px;
+  font-weight: bold;
+  color: #ffffff;
   line-height: 1;
 }
 
-.topbar-logo span {
-  font-size: 10px;
-  letter-spacing: 2px;
+.stat-card-premium .card-label {
+  font-size: 11px;
   color: var(--muted-purple);
-  margin-top: 4px;
+  margin-top: 8px;
+  line-height: 1.4;
 }
 
-.goth-nav-btn {
-  background: none;
-  border: 1px solid var(--border-metal);
-  font-size: 18px;
-  padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.goth-nav-btn:hover {
-  border-color: var(--goth-crimson-bright);
-  box-shadow: 0 0 10px var(--goth-crimson);
-}
-
-/* --- Contenido Principal --- */
-.main-content {
-  flex: 1;
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* --- Sección de Bienvenida y Buscador --- */
-.welcome-section {
-  text-align: center;
-  margin-bottom: 50px;
-}
-
-.welcome-section h1 {
-  font-size: 32px;
-  letter-spacing: 1px;
-  color: #ffffff;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-
-.welcome-section p {
-  color: var(--muted-purple);
-  font-size: 16px;
-  margin-bottom: 25px;
-}
-
-.search-container {
-  position: relative;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.goth-input {
-  width: 100%;
-  background-color: var(--bg-dark-card);
-  border: 1px solid var(--border-metal);
-  border-radius: 4px;
-  padding: 12px 40px 12px 15px;
-  color: #ffffff;
-  font-size: 15px;
-  transition: all 0.3s ease;
-}
-
-.goth-input:focus {
-  outline: none;
-  border-color: var(--goth-crimson);
-  box-shadow: 0 0 8px rgba(169, 29, 34, 0.4);
-}
-
-.search-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  opacity: 0.7;
-}
-
-/* --- Estantería de Libros (Grid) --- */
-.shelf-section h2 {
-  font-size: 22px;
-  letter-spacing: 2px;
-  border-bottom: 1px solid var(--border-metal);
+/* --- Filtros en Fichas (Chips) --- */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
   padding-bottom: 10px;
-  margin-bottom: 30px;
-  color: #ffffff;
+  margin: 15px 0;
 }
 
-.goth-bullet {
-  color: var(--goth-crimson-bright);
-  margin-right: 5px;
-}
-
-.books-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 25px;
-}
-
-/* --- Tarjetas de Libros --- */
-.book-card {
+.filter-chips button {
   background-color: var(--bg-dark-card);
   border: 1px solid var(--border-metal);
-  border-radius: 8px;
-  padding: 20px;
-  position: relative;
-  transition: transform 0.3s ease, border-color 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.book-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--goth-crimson);
-  box-shadow: 0 6px 20px rgba(169, 29, 34, 0.2);
-}
-
-.book-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background-color: rgba(169, 29, 34, 0.2);
-  border: 1px solid var(--goth-crimson);
-  color: var(--goth-crimson-bright);
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  letter-spacing: 1px;
-}
-
-.book-title {
-  font-size: 18px;
-  color: #ffffff;
-  margin-top: 15px;
-  margin-bottom: 6px;
-  line-height: 1.3;
-}
-
-.book-author {
-  color: var(--muted-purple);
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
-/* --- Barras de Progreso Místicas --- */
-.progress-container {
-  background-color: var(--bg-dark-absolute);
-  border: 1px solid var(--border-metal);
-  height: 6px;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.progress-bar {
-  background: linear-gradient(90deg, var(--goth-crimson), var(--goth-crimson-bright));
-  height: 100%;
-  box-shadow: 0 0 8px var(--goth-crimson-bright);
-}
-
-.progress-text {
-  font-size: 11px;
-  color: var(--muted-purple);
-}
-
-.no-results {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: var(--muted-purple);
-  font-style: italic;
-  padding: 30px 0;
-}
-
-/* --- Pie de Página --- */
-.goth-footer {
-  background-color: #030206;
-  border-top: 1px solid var(--border-metal);
-  text-align: center;
-  padding: 20px;
+  color: var(--silver-text);
+  padding: 6px 12px;
+  border-radius: 15px;
+  white-space: nowrap;
   font-size: 12px;
-  color: var(--muted-purple);
-  letter-spacing: 1px;
-  }
+  cursor: pointer;
+}
+
+.filter-chips button.active {
+  background-color: var(--goth-crimson);
+  border-color: var(--goth-crimson-bright);
+}
