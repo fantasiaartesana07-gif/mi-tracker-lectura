@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Fuentes místicas y estilos góticos avanzados
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');`;
@@ -7,14 +7,10 @@ const GENRES = ["Fantasía", "Romance", "Thriller", "Ciencia Ficción", "Drama",
 const STATES = ["Pendiente", "En lectura", "Terminado", "Abandonado"];
 const RATINGS = [1, 2, 3, 4, 5];
 
-// Citas místicas para rellenar la base del Grimorio con atmósfera
-const FRASES_GRIMORIO = [
-  "«Los libros son espejos: solo ves en ellos lo que ya tienes dentro».",
-  "«La lectura es un pacto de silencio entre dos almas eternas».",
-  "«Quien devora tomos en la penumbra, jamás teme a la soledad de la noche».",
-  "«Cada página pasada es un segundo robado al olvido del tiempo».",
-  "«En el eco de las palabras escritas se esconden los secretos del cosmos»."
-];
+const FRASE_VAMPIRICA = "«La inmortalidad no se mide en años, sino en los mundos que devoramos antes del amanecer».";
+
+// Pista gótica/vampírica instrumental y libre de copyright para ambiente profundo
+const AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"; 
 
 const STATE_COLORS = {
   "Pendiente": "#9d4edf",
@@ -51,7 +47,6 @@ const styles = `
     font-family: 'Plus Jakarta Sans', sans-serif; 
     background: ${PALETTE.bg}; 
     color: ${PALETTE.text};
-    /* Niebla mística de fondo: degradado superior e inferior profundo */
     background-image: 
       linear-gradient(180deg, rgba(99, 32, 160, 0.15) 0%, rgba(7, 4, 15, 0) 40%, rgba(169, 29, 34, 0.08) 85%, #000000 100%);
     background-attachment: fixed;
@@ -60,42 +55,79 @@ const styles = `
 
   .app { min-height: 100vh; padding-bottom: 80px; position: relative; }
 
-  /* TOP BAR CORREGIDA */
   .topbar {
     background: rgba(11, 5, 20, 0.93);
-    border-bottom: 1px solid rgba(99, 32, 160, 0.3);
+    border-bottom: 1px solid rgba(169, 29, 34, 0.3);
     backdrop-filter: blur(15px);
-    padding: 15px 20px;
+    padding: 12px 20px;
     position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.7);
   }
   
   .topbar-container {
     display: flex; width: 100%; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto;
   }
 
+  /* NUEVO LOGO EMBLEMÁTICO GÓTICO */
+  .goth-logo-box {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .goth-crest {
+    font-size: 22px; color: ${PALETTE.accent2};
+    filter: drop-shadow(0 0 5px rgba(169, 29, 34, 0.8));
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
   .topbar-logo {
     font-family: 'Cinzel', serif;
-    font-size: 15px; font-weight: 700;
-    color: #ffffff; letter-spacing: 1px;
-    text-shadow: 0 0 10px rgba(157, 78, 223, 0.6);
-    line-height: 1.2;
+    font-size: 14px; font-weight: 700;
+    color: #ffffff; letter-spacing: 1.5px;
+    text-shadow: 0 0 8px rgba(169, 29, 34, 0.5);
+    line-height: 1.1;
   }
-  .topbar-logo span { font-size: 10px; color: ${PALETTE.muted}; font-family: 'Plus Jakarta Sans', sans-serif; display: block; font-weight: 400; }
+  .topbar-logo span { 
+    font-size: 8.5px; color: ${PALETTE.muted}; 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    display: block; font-weight: 600; 
+    letter-spacing: 0.5px; margin-top: 1px;
+  }
   
   .nav { display: flex; background: #05030a; padding: 4px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04); }
   .nav-btn {
     background: none; border: none; cursor: pointer;
-    padding: 7px 14px; border-radius: 16px;
+    padding: 7px 12px; border-radius: 16px;
     font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
     color: ${PALETTE.muted}; transition: all 0.3s ease;
   }
-  .nav-btn.active { background: ${PALETTE.accent}; color: white; box-shadow: 0 0 12px ${PALETTE.accent3}; }
+  .nav-btn.active { background: ${PALETTE.accent2}; color: white; box-shadow: 0 0 12px ${PALETTE.accent2}; }
 
-  /* MAIN CONTENEDOR */
+  /* REPRODUCTOR FLOTANTE DE AMBIENTE VAMPÍRICO */
+  .audio-controller {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(22, 12, 40, 0.85); border: 1px solid rgba(157, 78, 223, 0.3);
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; color: #ffffff;
+    cursor: pointer; transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .audio-controller.playing {
+    border-color: ${PALETTE.accent2};
+    box-shadow: 0 0 10px rgba(169, 29, 34, 0.4);
+  }
+  .audio-wave {
+    display: flex; gap: 2px; align-items: flex-end; height: 10px;
+  }
+  .audio-bar {
+    width: 2px; height: 100%; background: ${PALETTE.muted}; border-radius: 1px;
+  }
+  .playing .audio-bar {
+    background: ${PALETTE.accent2};
+    animation: wave-bounce 1s ease-in-out infinite alternate;
+  }
+  .playing .audio-bar:nth-child(2) { animation-delay: 0.2s; }
+  .playing .audio-bar:nth-child(3) { animation-delay: 0.4s; }
+
   .main { padding: 20px; max-width: 500px; margin: 0 auto; }
 
-  /* TITULOS DE SECCIÓN */
   .section-title {
     font-family: 'Cinzel', serif;
     font-size: 13px; font-weight: 700;
@@ -105,34 +137,31 @@ const styles = `
   }
   .section-title::before { content: '✦'; color: ${PALETTE.accent2}; font-size: 14px; }
 
-  /* LUNA DE SANGRE MEJORADA */
   .luna-widget {
     background: linear-gradient(135deg, #1f080f 0%, #11061c 100%);
     border: 1px solid rgba(169, 29, 34, 0.45); border-radius: 16px;
     padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 25px;
-    box-shadow: 0 6px 25px rgba(169, 29, 34, 0.15), inset 0 0 15px rgba(169,29,34,0.1);
+    box-shadow: 0 6px 25px rgba(169, 29, 34, 0.2), inset 0 0 15px rgba(169,29,34,0.15);
   }
-  .luna-img-wrapper {
-    font-size: 32px; filter: drop-shadow(0 0 8px #a91d22);
+  .luna-real-img {
+    width: 44px; height: 44px; border-radius: 50%;
+    filter: hue-rotate(335deg) saturate(3.5) brightness(0.9) drop-shadow(0 0 10px #a91d22);
     animation: float 4s ease-in-out infinite;
+    object-fit: cover;
   }
 
-  /* MATRIZ DE ESTADÍSTICAS REFORZADA */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
   .stat-card {
     background: linear-gradient(145deg, ${PALETTE.card} 0%, ${PALETTE.surface} 100%); 
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 16px; border: 1px solid rgba(255,255,255,0.03);
     padding: 16px; position: relative; overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    border-left: 3px solid ${PALETTE.accent};
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-left: 3px solid ${PALETTE.accent};
   }
   .stat-card.candles-card { border-left-color: ${PALETTE.accent2}; }
   .stat-label { font-size: 11px; color: ${PALETTE.muted}; font-weight: 600; letter-spacing: 0.3px; }
   .stat-value { font-size: 28px; color: #ffffff; font-weight: 700; margin: 4px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
   .stat-sub { font-size: 11px; color: ${PALETTE.muted}; }
 
-  /* CONTENEDOR GRÁFICO MEJORADO */
   .chart-box {
     background: #11091f; padding: 18px; border-radius: 16px; margin-bottom: 25px;
     border: 1px solid rgba(99, 32, 160, 0.15); box-shadow: 0 6px 20px rgba(0,0,0,0.3);
@@ -144,21 +173,17 @@ const styles = `
     transition: height 0.5s ease;
   }
 
-  /* SECCIÓN INFERIOR: PERGAMINO DE CITAS (RELLENA EL VACÍO) */
   .grimorio-quote-box {
     background: linear-gradient(180deg, rgba(23, 13, 42, 0.6) 0%, rgba(11, 5, 20, 0.9) 100%);
-    border: 1px dashed rgba(157, 78, 223, 0.3);
-    border-radius: 14px; padding: 20px; text-align: center; margin-top: 20px;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
-    position: relative;
+    border: 1px dashed rgba(169, 29, 34, 0.4); border-radius: 14px; padding: 22px; text-align: center; margin-top: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6); position: relative;
   }
   .grimorio-quote-box::before, .grimorio-quote-box::after {
-    content: '✵'; color: ${PALETTE.accent3}; position: absolute; top: 8px; font-size: 10px; opacity: 0.5;
+    content: '✵'; color: ${PALETTE.accent2}; position: absolute; top: 8px; font-size: 10px; opacity: 0.6;
   }
   .grimorio-quote-box::before { left: 12px; }
   .grimorio-quote-box::after { right: 12px; }
 
-  /* COMPONENTES DE INTERFAZ */
   .add-btn {
     width: 100%; background: linear-gradient(90deg, ${PALETTE.accent2}, ${PALETTE.accent}); color: white;
     border: none; cursor: pointer; padding: 14px; border-radius: 14px;
@@ -169,23 +194,19 @@ const styles = `
   .search-input {
     width: 100%; padding: 12px 18px; border-radius: 25px; border: 1px solid rgba(157, 78, 223, 0.2);
     font-size: 12px; background: #0b0614; color: white; outline: none; margin-bottom: 20px;
-    transition: all 0.3s;
   }
-  .search-input:focus { border-color: ${PALETTE.accent3}; box-shadow: 0 0 8px rgba(157,78,223,0.2); }
 
   .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
   .filter-chip {
     padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04);
     background: ${PALETTE.surface}; cursor: pointer; font-size: 11px; color: ${PALETTE.muted}; white-space: nowrap; font-weight: 600;
   }
-  .filter-chip.active { background: ${PALETTE.accent}; color: white; border-color: ${PALETTE.accent3}; box-shadow: 0 0 8px ${PALETTE.accent}; }
+  .filter-chip.active { background: ${PALETTE.accent2}; color: white; border-color: ${PALETTE.accent2}; box-shadow: 0 0 8px ${PALETTE.accent2}; }
 
-  /* TARJETAS VACÍAS ESTILIZADAS */
   .empty-state-box {
     background: linear-gradient(180deg, #130a24 0%, #0c0617 100%);
-    padding: 45px 20px; border-radius: 16px; textAlign: center;
-    border: 1px dashed rgba(169, 29, 34, 0.3);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    padding: 45px 20px; border-radius: 16px; text-align: center;
+    border: 1px dashed rgba(169, 29, 34, 0.3); box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     display: flex; flex-direction: column; align-items: center; gap: 10px;
   }
 
@@ -197,8 +218,7 @@ const styles = `
   
   .ritual-box { 
     background: linear-gradient(145deg, ${PALETTE.card} 0%, ${PALETTE.surface} 100%); 
-    padding: 22px; border-radius: 16px; border: 1px solid ${PALETTE.border};
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    padding: 22px; border-radius: 16px; border: 1px solid ${PALETTE.border}; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
   }
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   .form-label { font-size: 10px; color: ${PALETTE.muted}; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
@@ -210,43 +230,50 @@ const styles = `
   .modal-overlay { position: fixed; inset: 0; background: rgba(3,2,7,0.9); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 15px; }
   .modal { background: ${PALETTE.surface}; border-radius: 20px; border: 1px solid rgba(157,78,223,0.3); width: 100%; max-width: 400px; padding: 25px; }
 
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes pulse-glow { 0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 4px #a91d22); } 50% { opacity: 1; filter: drop-shadow(0 0 10px #a91d22); } }
+  @keyframes wave-bounce { from { height: 3px; } to { height: 12px; } }
 `;
 
 export default function App() {
   const [tab, setTab] = useState("dashboard");
   const [books, setBooks] = useState(() => JSON.parse(localStorage.getItem("goth_books") || "[]"));
   const [sessions, setSessions] = useState(() => JSON.parse(localStorage.getItem("goth_sessions") || "[]"));
-  const [quote, setQuote] = useState("");
+  
+  // Estado para controlar el audio ambiental
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  useEffect(() => { localStorage.setItem("goth_books", JSON.stringify(books)); }, [books]);
+  useEffect(() => { localStorage.setItem("goth_sessions", JSON.stringify(sessions)); }, [sessions]);
 
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
   const [filterState, setFilterState] = useState("Todos");
 
-  // Al iniciar, selecciona una cita mística aleatoria del Grimorio para rellenar la base
-  useEffect(() => {
-    const randomQuote = FRASES_GRIMORIO[Math.floor(Math.random() * FRASES_GRIMORIO.length)];
-    setQuote(randomQuote);
-  }, [tab]);
-
-  useEffect(() => { localStorage.setItem("goth_books", JSON.stringify(books)); }, [books]);
-  useEffect(() => { localStorage.setItem("goth_sessions", JSON.stringify(sessions)); }, [sessions]);
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(err => console.log("Interacción requerida inicial:", err));
+    }
+    setIsPlaying(!isPlaying);
+  };
 
   const totalPages = sessions.reduce((acc, s) => acc + (Number(s.pages) || 0), 0);
   const totalMinutes = sessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  // Filtrado de tomos de la biblioteca
   const filteredBooks = books.filter(b => {
     const matchesSearch = b.title?.toLowerCase().includes(search.toLowerCase()) || b.author?.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterState === "Todos" || b.state === filterState;
     return matchesSearch && matchesFilter;
   });
 
-  // Agrupar lecturas por mes de manera real para alimentar el gráfico
   const getMonthHeight = (monthIndex) => {
-    if (books.length === 0 && sessions.length === 0) return "6px"; // Altura mínima mística
+    if (books.length === 0 && sessions.length === 0) return "6px";
     const count = sessions.filter(s => {
       if (!s.date) return false;
       const parts = s.date.split("/");
@@ -259,12 +286,21 @@ export default function App() {
     <div className="app">
       <style>{styles}</style>
       
+      {/* Elemento de Audio Oculto */}
+      <audio ref={audioRef} src={AUDIO_URL} loop />
+
       <header className="topbar">
         <div className="topbar-container">
-          <div className="topbar-logo">
-            Cripta de Lectura
-            <span>Módulo de Monitoreo de Tomos</span>
+          
+          {/* IDENTIDAD REDISEÑADA: LOGO GÓTICO HERÁLDICO */}
+          <div className="goth-logo-box">
+            <span className="goth-crest">☥</span>
+            <div className="topbar-logo">
+              BAPTISMA
+              <span>BIBLIOTECA DE SANGRE</span>
+            </div>
           </div>
+
           <nav className="nav">
             <button className={`nav-btn ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>🔮 Cripta</button>
             <button className={`nav-btn ${tab === "gallery" ? "active" : ""}`} onClick={() => setTab("gallery")}>📚 Tomos</button>
@@ -278,10 +314,26 @@ export default function App() {
         {/* PESTAÑA 1: DASHBOARD (CRIPTA) */}
         {tab === "dashboard" && (
           <div>
-            <div className="section-title">Panel de la Eternidad</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div className="section-title" style={{ margin: 0 }}>Panel de la Eternidad</div>
+              
+              {/* BOTÓN REPRODUCTOR ATMOSFÉRICO */}
+              <button className={`audio-controller ${isPlaying ? "playing" : ""}`} onClick={toggleAudio}>
+                <div className="audio-wave">
+                  <div className="audio-bar"></div>
+                  <div className="audio-bar"></div>
+                  <div className="audio-bar"></div>
+                </div>
+                <span>{isPlaying ? "SINFONÍA ACTIVA" : "INVOCAR AUDIO"}</span>
+              </button>
+            </div>
             
             <div className="luna-widget">
-              <div className="luna-img-wrapper">🔴</div>
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/1/10/Supermoon_Nov-14-2016-Cropped.jpg" 
+                alt="Luna de Sangre"
+                className="luna-real-img"
+              />
               <div>
                 <div style={{ fontWeight: "700", fontSize: "14px", color: "#ffffff", fontFamily: "'Cinzel', serif", letterSpacing: "0.5px" }}>LUNA DE SANGRE</div>
                 <div style={{ fontSize: "11px", color: PALETTE.accent2, fontWeight: "600", marginTop: "2px" }}>⚡ Poder máximo — noche de luna de sangre</div>
@@ -313,9 +365,8 @@ export default function App() {
                 </div>
                 <div className="stat-sub">sobre grimorios leídos</div>
               </div>
-             </div>
+            </div>
 
-            {/* GRÁFICO DE BARRAS REDISEÑADO CON NEÓN */}
             <div className="chart-box">
               <div style={{ fontSize: "11px", color: PALETTE.muted, marginBottom: "15px", fontFamily: "'Cinzel', serif", letterSpacing: "1px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <span>🌙</span> Tomos por mes
@@ -330,10 +381,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* RELLENO DEL FONDO: CONTENEDOR DE CITAS GÓTICAS */}
             <div className="grimorio-quote-box">
-              <div style={{ fontfamily: "'Cinzel', serif", fontSize: "9px", color: PALETTE.accent3, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>Inscripción del Grimorio</div>
-              <p style={{ fontSize: "11px", color: "#c3b9d9", fontStyle: "italic", lineHeight: "1.5" }}>{quote}</p>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: "9px", color: PALETTE.accent2, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px", fontWeight: "700" }}>Inscripción del Santuario</div>
+              <p style={{ fontSize: "11.5px", color: "#e6def5", fontStyle: "italic", lineHeight: "1.6", letterSpacing: "0.2px" }}>{FRASE_VAMPIRICA}</p>
             </div>
           </div>
         )}
@@ -375,7 +425,7 @@ export default function App() {
               <div className="books-grid">
                 {filteredBooks.map(b => (
                   <div key={b.id} className="book-card">
-                    <div style={{ height: "120px", background: "linear-gradient(135deg, #180d2b, #07040f)", display: "flex", alignItems: "center", justifycontent: "center", fontSize: "32px", position: "relative", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
+                    <div style={{ height: "120px", background: "linear-gradient(135deg, #180d2b, #07040f)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", position: "relative", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
                       📚
                       <span style={{ position: "absolute", bottom: "8px", left: "8px", background: STATE_COLORS[b.state], fontSize: "8px", padding: "3px 8px", borderRadius: "10px", color: "white", fontWeight: "700" }}>
                         {b.state.toUpperCase()}
@@ -390,11 +440,6 @@ export default function App() {
                 ))}
               </div>
             )}
-
-            {/* SECCIÓN INFERIOR: RELLENO EN BIBLIOTECA */}
-            <div className="grimorio-quote-box" style={{ marginTop: "25px" }}>
-              <p style={{ fontSize: "10px", color: PALETTE.muted }}>Sección protegida bajo el sello de la Luna de Sangre</p>
-            </div>
           </div>
         )}
 
@@ -425,7 +470,7 @@ export default function App() {
               }}>
                 <div className="form-group">
                   <label className="form-label">Seleccionar Tomo Sello</label>
-                  <select name="bookId" className="form-input" style={{ background: "#090512" }}>
+                  <select name="bookId" className="form-input">
                     {books.length === 0 && <option value="">— Sin tomos disponibles —</option>}
                     {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                   </select>
@@ -458,7 +503,7 @@ export default function App() {
                 sessions.map(s => {
                   const b = books.find(bk => String(bk.id) === String(s.bookId));
                   return (
-                    <div key={s.id} style={{ background: PALETTE.surface, padding: "14px", borderRadius: "12px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
+                    <div key={s.id} style={{ background: PALETTE.surface, padding: "14px", borderRadius: "12px", marginBottom: "10px", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifycontent: "space-between", alignItems: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
                       <div>
                         <div style={{ fontSize: "12px", fontWeight: "700", color: "#ffffff" }}>{b ? b.title : "Tomo Desconocido"}</div>
                         <div style={{ fontSize: "10px", color: PALETTE.muted, marginTop: "2px" }}>{s.date} • {s.duration} mins en silencio</div>
