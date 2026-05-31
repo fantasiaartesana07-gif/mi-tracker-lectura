@@ -296,7 +296,7 @@ function App() {
       </main>
 
       <footer style={styles.footer}>
-        © 2026 Neófito App — Hecho en las Sombras
+        © Neófito App — Hecho en las Sombras
       </footer>
     </div>
   );
