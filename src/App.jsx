@@ -27,6 +27,9 @@ function App() {
   const [nuevaPortada, setNuevaPortada] = useState("");
   const [nuevaSinopsis, setNuevaSinopsis] = useState("");
   
+  // CONTROL DE EDICIÓN
+  const [tomoEdicionId, setTomoEdicionId] = useState(null);
+
   const [ritualTomoId, setRitualTomoId] = useState("");
   const [pagInicio, setPagInicio] = useState(0);
   const [pagFin, setPagFin] = useState(0);
@@ -41,30 +44,88 @@ function App() {
   }, [rituales]);
 
   // --- MANEJADORES DE LOGICA ---
-  const agregarTomo = (e) => {
+  const guardarTomo = (e) => {
     e.preventDefault();
     if (!nuevoTitulo || !totalPaginas) return;
 
-    const nuevo = {
-      id: Date.now(),
-      titulo: nuevoTitulo,
-      autor: nuevoAutor || "Anónimo",
-      genero: nuevoGenero || "Desconocido",
-      portada: nuevaPortada || "",
-      sinopsis: nuevaSinopsis || "",
-      paginasTotales: parseInt(totalPaginas),
-      paginasLeidas: 0,
-      estado: 'pendiente',
-      calificacion: 0 // Se califica con cráneos más adelante
-    };
+    if (tomoEdicionId) {
+      // MODO EDICIÓN: Actualizar manuscrito existente
+      setTomos(tomos.map(t => {
+        if (t.id === tomoEdicionId) {
+          return {
+            ...t,
+            titulo: nuevoTitulo,
+            autor: nuevoAutor || "Anónimo",
+            genero: nuevoGenero || "Desconocido",
+            portada: nuevaPortada || "",
+            sinopsis: nuevaSinopsis || "",
+            paginasTotales: parseInt(totalPaginas)
+          };
+        }
+        return t;
+      }));
+      setTomoEdicionId(null);
+    } else {
+      // MODO CREACIÓN: Añadir nuevo tomo oculto
+      const nuevo = {
+        id: Date.now(),
+        titulo: nuevoTitulo,
+        autor: nuevoAutor || "Anónimo",
+        genero: nuevoGenero || "Desconocido",
+        portada: nuevaPortada || "",
+        sinopsis: nuevaSinopsis || "",
+        paginasTotales: parseInt(totalPaginas),
+        paginasLeidas: 0,
+        estado: 'pendiente',
+        calificacion: 0
+      };
+      setTomos([...tomos, nuevo]);
+    }
 
-    setTomos([...tomos, nuevo]);
+    // Resetear formulario
     setNuevoTitulo("");
     setNuevoAutor("");
     setTotalPaginas("");
     setNuevoGenero("");
     setNuevaPortada("");
     setNuevaSinopsis("");
+  };
+
+  // Activa el modo edición cargando los datos en el formulario
+  const activarEdicion = (tomo) => {
+    setTomoEdicionId(tomo.id);
+    setNuevoTitulo(tomo.titulo);
+    setNuevoAutor(tomo.autor === "Anónimo" ? "" : tomo.autor);
+    setTotalPaginas(tomo.paginasTotales);
+    setNuevoGenero(tomo.genero === "Desconocido" ? "" : tomo.genero);
+    setNuevaPortada(tomo.portada);
+    setNuevaSinopsis(tomo.sinopsis);
+    
+    // Abre automáticamente el <details> del formulario si estuviera cerrado
+    const detallesForm = document.getElementById('detalles-tomo');
+    if (detallesForm) detallesForm.open = true;
+  };
+
+  // Cancela la edición y limpia los inputs
+  const cancelarEdicion = () => {
+    setTomoEdicionId(null);
+    setNuevoTitulo("");
+    setNuevoAutor("");
+    setTotalPaginas("");
+    setNuevoGenero("");
+    setNuevaPortada("");
+    setNuevaSinopsis("");
+  };
+
+  // Elimina permanentemente el manuscrito de la cripta
+  const desterrarTomo = (id) => {
+    if (window.confirm("¿Seguro que deseas desterrar este manuscrito para siempre en el olvido?")) {
+      setTomos(tomos.filter(t => t.id !== id));
+      // Si se estaba editando ese tomo, cancelamos la edición
+      if (tomoEdicionId === id) {
+        cancelarEdicion();
+      }
+    }
   };
 
   const agregarRitual = (e) => {
@@ -99,7 +160,6 @@ function App() {
     setPagInicio(pagFin);
   };
 
-  // Función para calificar con cráneos
   const calificarTomo = (id, nota) => {
     setTomos(tomos.map(t => t.id === id ? { ...t, calificacion: nota } : t));
   };
@@ -122,7 +182,6 @@ function App() {
   return (
     <div style={styles.appContainer}>
       
-      {/* INYECTOR DE ESTILOS GLOBALES FORZADO */}
       <style>{`
         body { background-color: #07040f !important; margin: 0; color: #cdcbd1; font-family: sans-serif; }
         input::placeholder, textarea::placeholder { color: #5a4b75; }
@@ -136,7 +195,6 @@ function App() {
           <h1 style={styles.logoText}>NEÓFITO<span style={styles.subLogo}>BIBLIOTECA DE SANGRE</span></h1>
         </div>
 
-        {/* SELECTOR DE PESTAÑAS */}
         <div style={styles.tabsContainer}>
           <button style={{...styles.tabBtn, ...(pestanaActiva === 'cripta' ? styles.tabActive : {})}} onClick={() => setPestanaActiva('cripta')}>
             🏰 Cripta
@@ -197,10 +255,12 @@ function App() {
           <div>
             <h2 style={styles.sectionTitle}>✦ La Biblioteca Oscura ✦</h2>
 
-            {/* Añadir Libro Oculto Expandido */}
-            <details style={{marginBottom: '15px'}}>
-              <summary style={styles.summaryBtn}>➕ Añadir tomo oculto</summary>
-              <form onSubmit={agregarTomo} style={styles.formBox}>
+            {/* Añadir / Editar Libro Formulario */}
+            <details id="detalles-tomo" style={{marginBottom: '15px'}}>
+              <summary style={{...styles.summaryBtn, borderColor: tomoEdicionId ? '#ff4d54' : '#1f163a'}}>
+                {tomoEdicionId ? '✍️ Modificando Manuscrito Oculto' : '➕ Añadir tomo oculto'}
+              </summary>
+              <form onSubmit={guardarTomo} style={styles.formBox}>
                 <input style={styles.input} type="text" placeholder="Título del Tomo *" value={nuevoTitulo} onChange={e => setNuevoTitulo(e.target.value)} required />
                 <input style={styles.input} type="text" placeholder="Autor / Entidad" value={nuevoAutor} onChange={e => setNuevoAutor(e.target.value)} />
                 
@@ -219,7 +279,16 @@ function App() {
                 <input style={styles.input} type="url" placeholder="URL de la Portada (Opcional)" value={nuevaPortada} onChange={e => setNuevaPortada(e.target.value)} />
                 <textarea style={styles.textarea} placeholder="Sinopsis maldita..." value={nuevaSinopsis} onChange={e => setNuevaSinopsis(e.target.value)} />
                 
-                <button style={styles.submitBtn} type="submit">Sellar Manuscrito</button>
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button style={{...styles.submitBtn, flex: 2, backgroundColor: tomoEdicionId ? '#800e13' : '#2d1b4e'}} type="submit">
+                    {tomoEdicionId ? 'Reescribir Alquimia' : 'Sellar Manuscrito'}
+                  </button>
+                  {tomoEdicionId && (
+                    <button style={{...styles.submitBtn, flex: 1, backgroundColor: '#333'}} type="button" onClick={cancelarEdicion}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
               </form>
             </details>
 
@@ -247,7 +316,6 @@ function App() {
               {tomosFiltrados.length > 0 ? (
                 tomosFiltrados.map(t => (
                   <div key={t.id} style={styles.tomoCard}>
-                    {/* Contenedor Flex para Portada + Info */}
                     <div style={{display: 'flex', gap: '12px', width: '100%'}}>
                       
                       {/* Portada */}
@@ -261,7 +329,16 @@ function App() {
 
                       {/* Información Central */}
                       <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-                        <h4 style={{margin: '0 0 2px 0', color: '#fff'}}>{t.titulo}</h4>
+                        
+                        {/* Fila del Título y Acciones de Edición/Destierro */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px'}}>
+                          <h4 style={{margin: '0 0 2px 0', color: '#fff', fontSize: '14px'}}>{t.titulo}</h4>
+                          <div style={{display: 'flex', gap: '8px', flexShrink: 0}}>
+                            <button title="Editar pergamino" onClick={() => activarEdicion(t)} style={styles.actionIconBtn}>✍️</button>
+                            <button title="Desterrar manuscrito" onClick={() => desterrarTomo(t.id)} style={styles.actionIconBtn}>❌</button>
+                          </div>
+                        </div>
+
                         <p style={{margin: '0 0 6px 0', fontSize: '12px', color: '#7a6a95'}}>Por {t.autor}</p>
                         
                         <div style={{display: 'flex', gap: '6px', marginBottom: '6px', flexWrap: 'wrap'}}>
@@ -374,7 +451,7 @@ function App() {
   );
 }
 
-// --- OBJETO DE ESTILOS INTEGRADOS (Gótico Inmersivo Forzado) ---
+// --- OBJETO DE ESTILOS INTEGRADOS ---
 const styles = {
   appContainer: {
     backgroundColor: '#07040f',
@@ -671,6 +748,17 @@ const styles = {
     color: '#5a4b75',
     paddingTop: '20px',
     marginTop: 'auto',
+  },
+  actionIconBtn: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+    padding: '2px',
+    opacity: 0.6,
+    transition: 'opacity 0.2s',
+    outline: 'none',
+    ':hover': { opacity: 1 }
   }
 };
 
