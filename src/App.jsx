@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function App() {
   // --- ESTADOS DE NAVEGACIÓN Y FILTROS ---
-  const [pestanaActiva, setPestanaActiva] = useState('cripta'); // 'cripta', 'tomos', 'rituales'
+  const [pestanaActiva, setPestanaActiva] = useState('cripta'); 
   const [filtroTomo, setFiltroTomo] = useState('todos');
   const [busqueda, setBusqueda] = useState("");
 
@@ -21,11 +21,11 @@ function App() {
   const [nuevoTitulo, setNuevoTitulo] = useState("");
   const [nuevoAutor, setNuevoAutor] = useState("");
   const [totalPaginas, setTotalPaginas] = useState("");
-  
-  // Nuevos campos
   const [nuevoGenero, setNuevoGenero] = useState("");
-  const [nuevaPortada, setNuevaPortada] = useState("");
   const [nuevaSinopsis, setNuevaSinopsis] = useState("");
+  
+  // NUEVO: Estado para almacenar la imagen en Base64
+  const [nuevaPortada, setNuevaPortada] = useState("");
   
   // CONTROL DE EDICIÓN
   const [tomoEdicionId, setTomoEdicionId] = useState(null);
@@ -43,13 +43,30 @@ function App() {
     localStorage.setItem('neofito_rituales', JSON.stringify(rituales));
   }, [rituales]);
 
+  // NUEVO: Manejador para procesar la foto de la memoria del celular
+  const manejarCambioImagen = (e) => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+
+    // Validación opcional: Evitar imágenes gigantescas porque el localStorage tiene un límite de ~5MB
+    if (archivo.size > 2 * 1024 * 1024) {
+      alert("El grimorio rechaza imágenes mayores a 2MB para no saturar las sombras.");
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onloadend = () => {
+      setNuevaPortada(lector.result); // Guarda la imagen convertida en texto Base64
+    };
+    lector.readAsDataURL(archivo);
+  };
+
   // --- MANEJADORES DE LOGICA ---
   const guardarTomo = (e) => {
     e.preventDefault();
     if (!nuevoTitulo || !totalPaginas) return;
 
     if (tomoEdicionId) {
-      // MODO EDICIÓN: Actualizar manuscrito existente
       setTomos(tomos.map(t => {
         if (t.id === tomoEdicionId) {
           return {
@@ -66,7 +83,6 @@ function App() {
       }));
       setTomoEdicionId(null);
     } else {
-      // MODO CREACIÓN: Añadir nuevo tomo oculto
       const nuevo = {
         id: Date.now(),
         titulo: nuevoTitulo,
@@ -91,7 +107,6 @@ function App() {
     setNuevaSinopsis("");
   };
 
-  // Activa el modo edición cargando los datos en el formulario
   const activarEdicion = (tomo) => {
     setTomoEdicionId(tomo.id);
     setNuevoTitulo(tomo.titulo);
@@ -101,12 +116,10 @@ function App() {
     setNuevaPortada(tomo.portada);
     setNuevaSinopsis(tomo.sinopsis);
     
-    // Abre automáticamente el <details> del formulario si estuviera cerrado
     const detallesForm = document.getElementById('detalles-tomo');
     if (detallesForm) detallesForm.open = true;
   };
 
-  // Cancela la edición y limpia los inputs
   const cancelarEdicion = () => {
     setTomoEdicionId(null);
     setNuevoTitulo("");
@@ -117,11 +130,9 @@ function App() {
     setNuevaSinopsis("");
   };
 
-  // Elimina permanentemente el manuscrito de la cripta
   const desterrarTomo = (id) => {
     if (window.confirm("¿Seguro que deseas desterrar este manuscrito para siempre en el olvido?")) {
       setTomos(tomos.filter(t => t.id !== id));
-      // Si se estaba editando ese tomo, cancelamos la edición
       if (tomoEdicionId === id) {
         cancelarEdicion();
       }
@@ -255,7 +266,7 @@ function App() {
           <div>
             <h2 style={styles.sectionTitle}>✦ La Biblioteca Oscura ✦</h2>
 
-            {/* Añadir / Editar Libro Formulario */}
+            {/* Formulario */}
             <details id="detalles-tomo" style={{marginBottom: '15px'}}>
               <summary style={{...styles.summaryBtn, borderColor: tomoEdicionId ? '#ff4d54' : '#1f163a'}}>
                 {tomoEdicionId ? '✍️ Modificando Manuscrito Oculto' : '➕ Añadir tomo oculto'}
@@ -276,7 +287,33 @@ function App() {
                   <input style={{...styles.input, flex: 1}} type="number" placeholder="Páginas *" value={totalPaginas} onChange={e => setTotalPaginas(e.target.value)} required />
                 </div>
                 
-                <input style={styles.input} type="url" placeholder="URL de la Portada (Opcional)" value={nuevaPortada} onChange={e => setNuevaPortada(e.target.value)} />
+                {/* MODIFICADO: Input de archivo nativo en lugar de URL de texto */}
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                  <label style={styles.label}>Ilustración de Portada:</label>
+                  <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                    <input 
+                      style={{...styles.input, padding: '6px'}} 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={manejarCambioImagen} 
+                    />
+                    {nuevaPortada && (
+                      <button 
+                        type="button" 
+                        onClick={() => setNuevaPortada("")} 
+                        style={{...styles.submitBtn, backgroundColor: '#333', padding: '6px 10px', fontSize: '11px'}}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                  {nuevaPortada && (
+                    <div style={{marginTop: '5px', fontSize: '11px', color: '#ff4d54'}}>
+                      ✓ Imagen cargada en el espectro.
+                    </div>
+                  )}
+                </div>
+
                 <textarea style={styles.textarea} placeholder="Sinopsis maldita..." value={nuevaSinopsis} onChange={e => setNuevaSinopsis(e.target.value)} />
                 
                 <div style={{display: 'flex', gap: '10px'}}>
@@ -311,7 +348,7 @@ function App() {
               ))}
             </div>
 
-            {/* Render de Tomos Expandido */}
+            {/* Render de Tomos */}
             <div>
               {tomosFiltrados.length > 0 ? (
                 tomosFiltrados.map(t => (
@@ -330,7 +367,6 @@ function App() {
                       {/* Información Central */}
                       <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
                         
-                        {/* Fila del Título y Acciones de Edición/Destierro */}
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px'}}>
                           <h4 style={{margin: '0 0 2px 0', color: '#fff', fontSize: '14px'}}>{t.titulo}</h4>
                           <div style={{display: 'flex', gap: '8px', flexShrink: 0}}>
@@ -453,313 +489,46 @@ function App() {
 
 // --- OBJETO DE ESTILOS INTEGRADOS ---
 const styles = {
-  appContainer: {
-    backgroundColor: '#07040f',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '16px',
-    boxSizing: 'border-box',
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    paddingBottom: '12px',
-    borderBottom: '1px solid #1f163a',
-    marginBottom: '16px',
-  },
-  logoBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  crest: {
-    color: '#ff4d54',
-    fontSize: '22px',
-  },
-  logoText: {
-    margin: 0,
-    fontSize: '18px',
-    letterSpacing: '1.5px',
-    color: '#ffffff',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  subLogo: {
-    fontSize: '8px',
-    color: '#7a6a95',
-    letterSpacing: '2px',
-    marginTop: '2px',
-  },
-  tabsContainer: {
-    display: 'flex',
-    backgroundColor: '#110b24',
-    padding: '4px',
-    borderRadius: '25px',
-    gap: '4px',
-  },
-  tabBtn: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    color: '#7a6a95',
-    padding: '8px 4px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  tabActive: {
-    backgroundColor: '#1c123a',
-    color: '#ffffff',
-    boxShadow: '0 0 10px rgba(255, 77, 84, 0.15)',
-  },
-  main: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: '19px',
-    color: '#ffffff',
-    margin: '0 0 8px 0',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  lunaStatus: {
-    backgroundColor: '#110b24',
-    border: '1px dashed #2d2050',
-    borderRadius: '8px',
-    padding: '10px',
-    fontSize: '12px',
-    textAlign: 'center',
-    marginBottom: '16px',
-    color: '#cdcbd1',
-  },
-  gridCards: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
-    marginBottom: '20px',
-  },
-  card: {
-    backgroundColor: '#110b24',
-    border: '1px solid #1f163a',
-    borderRadius: '12px',
-    padding: '14px',
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100px',
-  },
-  cardIcon: {
-    fontSize: '18px',
-    marginBottom: '6px',
-  },
-  cardNum: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: '#ffffff',
-    lineHeight: '1',
-    marginBottom: '6px',
-  },
-  cardLabel: {
-    fontSize: '10px',
-    color: '#5a4b75',
-    lineHeight: '1.3',
-  },
-  shadowBox: {
-    backgroundColor: '#110b24',
-    border: '1px solid #1f163a',
-    borderRadius: '10px',
-    padding: '14px',
-  },
-  summaryBtn: {
-    backgroundColor: '#110b24',
-    border: '1px solid #1f163a',
-    padding: '10px',
-    borderRadius: '6px',
-    color: '#fff',
-    fontSize: '13px',
-    cursor: 'pointer',
-    textAlign: 'center',
-    listStyle: 'none',
-  },
-  formBox: {
-    backgroundColor: '#110b24',
-    border: '1px solid #1f163a',
-    padding: '14px',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    marginTop: '8px',
-  },
-  input: {
-    backgroundColor: '#07040f',
-    border: '1px solid #1f163a',
-    color: '#fff',
-    padding: '10px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    outline: 'none',
-    boxSizing: 'border-box',
-    width: '100%',
-  },
-  textarea: {
-    backgroundColor: '#07040f',
-    border: '1px solid #1f163a',
-    color: '#fff',
-    padding: '10px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    outline: 'none',
-    boxSizing: 'border-box',
-    width: '100%',
-    minHeight: '70px',
-    resize: 'vertical',
-    fontFamily: 'inherit'
-  },
-  select: {
-    backgroundColor: '#07040f',
-    border: '1px solid #1f163a',
-    color: '#fff',
-    padding: '10px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    outline: 'none',
-    width: '100%',
-  },
-  submitBtn: {
-    backgroundColor: '#2d1b4e',
-    color: '#fff',
-    border: 'none',
-    padding: '10px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-  },
-  chipsRow: {
-    display: 'flex',
-    gap: '6px',
-    overflowX: 'auto',
-    paddingBottom: '8px',
-    marginBottom: '15px',
-  },
-  chip: {
-    background: '#110b24',
-    border: '1px solid #1f163a',
-    color: '#cdcbd1',
-    padding: '6px 12px',
-    borderRadius: '16px',
-    fontSize: '11px',
-    whiteSpace: 'nowrap',
-    cursor: 'pointer',
-  },
-  chipActive: {
-    background: '#800e13',
-    borderColor: '#ff4d54',
-    color: '#fff',
-  },
-  tomoCard: {
-    backgroundColor: '#110b24',
-    borderLeft: '3px solid #ff4d54',
-    borderTop: '1px solid #1f163a',
-    borderRight: '1px solid #1f163a',
-    borderBottom: '1px solid #1f163a',
-    padding: '12px',
-    borderRadius: '6px',
-    marginBottom: '10px',
-    display: 'flex',
-  },
-  portadaContainer: {
-    width: '70px',
-    flexShrink: 0,
-  },
-  portadaImg: {
-    width: '100%',
-    height: '100px',
-    objectFit: 'cover',
-    borderRadius: '4px',
-    border: '1px solid #1f163a',
-  },
-  portadaPlaceholder: {
-    width: '100%',
-    height: '100px',
-    backgroundColor: '#07040f',
-    borderRadius: '4px',
-    border: '1px solid #1f163a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '24px',
-  },
-  miniTag: {
-    fontSize: '10px',
-    padding: '2px 6px',
-    borderRadius: '10px',
-    backgroundColor: '#07040f',
-    border: '1px solid #2d2050',
-    color: '#cdcbd1'
-  },
-  sinopsisText: {
-    margin: '0 0 10px 0',
-    fontSize: '11px',
-    color: '#5a4b75',
-    fontStyle: 'italic',
-    lineHeight: '1.4',
-    display: '-webkit-box',
-    WebkitLineClamp: '3',
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden'
-  },
-  craneosBox: {
-    display: 'flex',
-    gap: '2px',
-  },
-  craneo: {
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'opacity 0.2s',
-  },
-  miniSelect: {
-    backgroundColor: '#07040f',
-    border: '1px solid #1f163a',
-    color: '#ff4d54',
-    fontSize: '11px',
-    padding: '4px',
-    borderRadius: '4px',
-  },
-  label: {
-    fontSize: '11px',
-    color: '#7a6a95',
-    marginBottom: '2px',
-    display: 'block',
-  },
-  ritualCard: {
-    backgroundColor: '#110b24',
-    border: '1px solid #1f163a',
-    padding: '10px',
-    borderRadius: '6px',
-    marginBottom: '8px',
-  },
-  footer: {
-    textAlign: 'center',
-    fontSize: '11px',
-    color: '#5a4b75',
-    paddingTop: '20px',
-    marginTop: 'auto',
-  },
-  actionIconBtn: {
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '12px',
-    padding: '2px',
-    opacity: 0.6,
-    transition: 'opacity 0.2s',
-    outline: 'none',
-    ':hover': { opacity: 1 }
-  }
+  appContainer: { backgroundColor: '#07040f', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '16px', boxSizing: 'border-box' },
+  header: { display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #1f163a', marginBottom: '16px' },
+  logoBox: { display: 'flex', alignItems: 'center', gap: '8px' },
+  crest: { color: '#ff4d54', fontSize: '22px' },
+  logoText: { margin: 0, fontSize: '18px', letterSpacing: '1.5px', color: '#ffffff', display: 'flex', flexDirection: 'column' },
+  subLogo: { fontSize: '8px', color: '#7a6a95', letterSpacing: '2px', marginTop: '2px' },
+  tabsContainer: { display: 'flex', backgroundColor: '#110b24', padding: '4px', borderRadius: '25px', gap: '4px' },
+  tabBtn: { flex: 1, background: 'transparent', border: 'none', color: '#7a6a95', padding: '8px 4px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' },
+  tabActive: { backgroundColor: '#1c123a', color: '#ffffff', boxShadow: '0 0 10px rgba(255, 77, 84, 0.15)' },
+  main: { flex: 1 },
+  sectionTitle: { fontSize: '19px', color: '#ffffff', margin: '0 0 8px 0', textAlign: 'center', fontWeight: '500' },
+  lunaStatus: { backgroundColor: '#110b24', border: '1px dashed #2d2050', borderRadius: '8px', padding: '10px', fontSize: '12px', textAlign: 'center', marginBottom: '16px', color: '#cdcbd1' },
+  gridCards: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' },
+  card: { backgroundColor: '#110b24', border: '1px solid #1f163a', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', minHeight: '100px' },
+  cardIcon: { fontSize: '18px', marginBottom: '6px' },
+  cardNum: { fontSize: '28px', fontWeight: 'bold', color: '#ffffff', lineHeight: '1', marginBottom: '6px' },
+  cardLabel: { fontSize: '10px', color: '#5a4b75', lineHeight: '1.3' },
+  shadowBox: { backgroundColor: '#110b24', border: '1px solid #1f163a', borderRadius: '10px', padding: '14px' },
+  summaryBtn: { backgroundColor: '#110b24', border: '1px solid #1f163a', padding: '10px', borderRadius: '6px', color: '#fff', fontSize: '13px', cursor: 'pointer', textAlign: 'center', listStyle: 'none' },
+  formBox: { backgroundColor: '#110b24', border: '1px solid #1f163a', padding: '14px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' },
+  input: { backgroundColor: '#07040f', border: '1px solid #1f163a', color: '#fff', padding: '10px', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', width: '100%' },
+  textarea: { backgroundColor: '#07040f', border: '1px solid #1f163a', color: '#fff', padding: '10px', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', width: '100%', minHeight: '70px', resize: 'vertical', fontFamily: 'inherit' },
+  select: { backgroundColor: '#07040f', border: '1px solid #1f163a', color: '#fff', padding: '10px', borderRadius: '6px', fontSize: '13px', outline: 'none', width: '100%' },
+  submitBtn: { backgroundColor: '#2d1b4e', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' },
+  chipsRow: { display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '15px' },
+  chip: { background: '#110b24', border: '1px solid #1f163a', color: '#cdcbd1', padding: '6px 12px', borderRadius: '16px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' },
+  chipActive: { background: '#800e13', borderColor: '#ff4d54', color: '#fff' },
+  tomoCard: { backgroundColor: '#110b24', borderLeft: '3px solid #ff4d54', borderTop: '1px solid #1f163a', borderRight: '1px solid #1f163a', borderBottom: '1px solid #1f163a', padding: '12px', borderRadius: '6px', marginBottom: '10px', display: 'flex' },
+  portadaContainer: { width: '70px', flexShrink: 0 },
+  portadaImg: { width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #1f163a' },
+  portadaPlaceholder: { width: '100%', height: '100px', backgroundColor: '#07040f', borderRadius: '4px', border: '1px solid #1f163a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' },
+  miniTag: { fontSize: '10px', padding: '2px 6px', borderRadius: '10px', backgroundColor: '#07040f', border: '1px solid #2d2050', color: '#cdcbd1' },
+  sinopsisText: { margin: '0 0 10px 0', fontSize: '11px', color: '#5a4b75', fontStyle: 'italic', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+  craneosBox: { display: 'flex', gap: '2px' },
+  craneo: { cursor: 'pointer', fontSize: '14px', transition: 'opacity 0.2s' },
+  miniSelect: { backgroundColor: '#07040f', border: '1px solid #1f163a', color: '#ff4d54', fontSize: '11px', padding: '4px', borderRadius: '4px' },
+  label: { fontSize: '11px', color: '#7a6a95', marginBottom: '2px', display: 'block' },
+  ritualCard: { backgroundColor: '#110b24', border: '1px solid #1f163a', padding: '10px', borderRadius: '6px', marginBottom: '8px' },
+  footer: { textAlign: 'center', fontSize: '11px', color: '#5a4b75', paddingTop: '20px', marginTop: 'auto' },
+  actionIconBtn: { background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', padding: '2px', opacity: 0.6, transition: 'opacity 0.2s', outline: 'none', ':hover': { opacity: 1 } }
 };
 
 export default App;
